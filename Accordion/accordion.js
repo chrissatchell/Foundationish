@@ -8,7 +8,8 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
     attr = {
         ready: "ready",
-        opened: "expanded"
+        opened: "expanded",
+        template: "template"
     };
 
     panelID = false;
@@ -24,6 +25,94 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
     // Cached detect parent accordion-items element for single-select attribute
     static singleSelectSupport = null;
 
+    #defaultTemplate = `
+        <style>
+            :host {
+                --test: red;
+            }
+            .disclosure {
+                border: var(--fndish-disclosure-border, 1px solid #ccc);
+                border-radius: 4px;
+            }
+            button {
+                cursor: pointer;
+                font-weight: bold;
+                padding: var(--fndish-disclosure-padding, 0.5rem);
+
+                cursor: pointer;
+                appearance: none;
+                background: none;
+                position: relative;
+                padding-inline-start: 14px;
+                color: light-dark(black, white);
+                font-weight: bold;
+
+                display: flex;
+                flex-flow: row wrap;
+                align-items: center;
+                justify-content: space-between;
+                padding-inline-start: calc(14px/16px*1rem);
+                width: 100%
+            }
+
+            button::after {
+                content: "";
+                border-right: 2px solid black;
+                border-bottom: 2px solid black;
+                margin-right: 0.45rem;
+                /* margin-left: auto; */
+                transform: translate(-1px, -0.5px) rotate(-45deg);
+
+                position: relative;
+                display: inline-block;
+                width: 7px;
+                height: 7px;
+                transition: 0.075s transform ease-out;
+                pointer-events: none;
+            }
+
+            button[aria-expanded="true"]::after {
+                transform: translate(-1px, -0.5px) rotate(var(--expanded-icon-rotation, 45deg));
+            }
+
+            .disclosure:has([aria-expanded="true"]) button {
+                color: var(--accordion-open-summary-color, #007BFF);
+                }
+
+            .disclosure button {
+                outline:1px solid red;
+            }
+
+            div[id] {
+                padding: var(--fndish-disclosure-padding);
+                padding-block-start: 0;
+                padding-block-end: 1.05rem;
+                padding-inline-start: 1rem;
+
+                & p {
+                    margin-block-end: 0;
+                }
+            }
+
+            :where(summary + div),
+            summary::details-content {
+                padding: var(--fndish-disclosure-padding);
+                padding-block-start: 0;
+            }
+        </style>
+
+        <div class="disclosure" role="group" part="disclosure">
+            <slot name="trigger">
+                <button class="trigger" part="trigger">Default Button</button>
+            </slot>
+            <slot name="panel">
+                <div class="panel" part="panel">
+                    <p>Default Default Default.</p>
+                </div>
+            </slot>
+        </div>
+    `;
+
 
     /**
      *  Attributes
@@ -31,14 +120,14 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
     /* Watch for attribute changes */
     static get observedAttributes () {
-        return ['ready', 'expanded'];
+        return ['ready', 'expanded', 'template'];
     }
 
     /* When attributes change then do something */
     attributeChangedCallback ( attrName, oldValue, newValue ) {
 
         /* Custom HTML is provided */
-        if ( this.detectCustomHTML() ) {
+        if ( this.detectCustomHTML() && !this.hasTemplateAttr() ) {
 
             switch ( attrName ) {
 
@@ -72,7 +161,7 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
         }
 
          /* Details element is provided */
-        if ( this.detectHTMLDetails() ) {
+        if ( this.detectHTMLDetails() && !this.hasTemplateAttr() ) {
 
             switch ( attrName ) {
 
@@ -116,6 +205,52 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
         }
 
+        /* [template] */
+        if ( this.hasTemplateAttr() ) {
+
+            switch ( attrName ) {
+
+                case 'expanded':
+
+                    let trigger = this.shadowRoot.querySelector('slot[name="trigger"]').assignedElements({ flatten: true })[0];
+
+                    let panel = this.shadowRoot.querySelector('slot[name="panel"]').assignedElements({ flatten: true })[0];
+
+                    // ADDED
+                    if ( newValue === '' ) {
+
+                        // Update aria for trigger and panel
+                        this.expandedAttrHandler().setAria(trigger,panel);
+
+                        /* Except for the target, close all disclosures */
+                        if ( this.hasSingleSelectAttribute() ) {
+                            this.expandedAttrHandler().closeAll();
+                        }
+
+                    // REMOVED
+                    } else if ( newValue === null ) {
+
+                        // Update aria for trigger and panel
+                        this.expandedAttrHandler().setAria(trigger,panel);
+
+                    }
+
+                    break;
+
+                default:
+                    break;
+            }
+
+        }
+    }
+
+
+    /**
+     *  Constructor
+     */
+
+    constructor() {
+        super();
     }
 
 
@@ -206,17 +341,61 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
         // Detect provided custom markup for a disclosure pattern
         // using a button and a div
-        if ( this.detectCustomHTML() ) {
+        if ( this.detectCustomHTML() && !this.hasTemplateAttr() ) {
             this.setAttribute('type','custom');
             this.#renderCustomHTMLDisclosure().setWrapperForDisclosure();
             this.#renderCustomHTMLDisclosure().setAttsForDisclosure();
         }
 
         // Detect 'details' element
-        if ( this.detectHTMLDetails() ) {
+        if ( this.detectHTMLDetails() && !this.hasTemplateAttr() ) {
             this.setAttribute('type','details');
             this.supportsDetailsName();
             this.#renderHTMLDetailsDisclosure();
+        }
+
+        // Has [template]
+        // NOTE: Detect [slot] of any children then halt this.detectCustomHTML() ?
+        if ( this.hasTemplateAttr() ) {
+
+            this.setAttribute('type','default-template');
+
+            const hasDeclarativeShadowRoot = !!this.shadowRoot;
+
+            const hasProvidedTemplate = this.querySelector('template');
+
+            const hasChildElements = this.children.length > 0;
+
+            const hasTemplateAttr = this.hasAttribute('template');
+
+            const setShadowDOM = ( mode = "open" ) => this.shadowRoot ?? this.attachShadow({ mode: mode });
+
+            if ( hasTemplateAttr ) {
+
+                setShadowDOM();
+
+                const template = document.createElement("template");
+
+                template.innerHTML = this.#defaultTemplate;
+
+                /**
+                 * Use a DocumentFragment instead of assigning directly with innerHTML.
+                 *
+                 * The template's .content is a DocumentFragment, which lets the browser
+                 * parse the markup once, build the DOM nodes off-document, and then append
+                 * them into the shadow root in a single operation. This is generally cleaner
+                 * and more performant than repeatedly touching the live DOM.
+                 */
+                const fragment = template.content.cloneNode(true);
+
+                this.shadowRoot.appendChild(fragment);
+
+                this.#renderCustomHTMLDisclosure().setAttsForDisclosure();
+            }
+
+            if ( ! hasDeclarativeShadowRoot ) {
+
+            }
         }
 
 
@@ -264,12 +443,26 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
         // Set the necessary ARIA attributes on the button and panel for accessibility
         let setAttsForDisclosure = ( button, content ) => {
-            let trigger = button || this.querySelector(".disclosure > button"),
-                panel = content || this.querySelector(".disclosure > div");
+            const root = this.shadowRoot ?? this;
+
+            let trigger = button || root.querySelector(".disclosure > button"),
+                panel = content || root.querySelector(".disclosure > div");
+
+            if (trigger === null) {
+                let triggerSlot = root.querySelector('slot[name="trigger"]');
+                trigger = triggerSlot.assignedElements({ flatten: true })[0];
+            }
+
+            if (panel === null) {
+                let panelSlot = root.querySelector('slot[name="panel"]');
+                panel = panelSlot.assignedElements({ flatten: true })[0];
+                console.log(panel);
+            }
+
 
             if (!panel.id) {
-                this.panelID = _generateUniqueID();
-                panel.id = this.panelID;
+                root.panelID = _generateUniqueID();
+                panel.id = root.panelID;
             }
 
             if (
@@ -279,13 +472,18 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
                 trigger.setAttribute("aria-controls", panel.id);
             }
 
-            if (!trigger.hasAttribute("aria-expanded")) {
+            if ( !trigger.hasAttribute("aria-expanded") ) {
                 trigger.setAttribute("aria-expanded", "false");
             }
 
             if (trigger.getAttribute("aria-expanded") === "false") {
                 panel.setAttribute("hidden", "");
             } else {
+                panel.removeAttribute("hidden");
+            }
+
+            if ( this.hasAttribute( this.attr.opened ) ) {
+                trigger.setAttribute("aria-expanded", "true");
                 panel.removeAttribute("hidden");
             }
         }
@@ -431,9 +629,15 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
     expandedAttrHandler() {
 
-        let setAria = (target = this.querySelector(".disclosure > button") ) => {
-            let trigger = target;
-            let panel = trigger.nextElementSibling;
+        let root = this.shadowRoot ?? this;
+
+        let setAria = (
+            trigger = root.querySelector(".disclosure > button"),
+            panel = root.querySelector(".disclosure > button").nextElementSibling
+        ) => {
+            // let trigger = target;
+            // let panel = trigger.nextElementSibling;
+            if ( trigger === null || panel === null ) return;
 
             if ( trigger.getAttribute("aria-expanded") === "true" ) {
                 trigger.setAttribute("aria-expanded", "false");
@@ -494,6 +698,9 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
         Attributes
     */
 
+    hasTemplateAttr () {
+        return this.hasAttribute('template');
+    }
 
 
     /*

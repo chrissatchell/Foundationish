@@ -36,7 +36,8 @@
         color: var(--accordion-open-summary-color, #007BFF);
     }
 
-    .disclosure > button[aria-expanded] {
+    /* .disclosure > button[aria-expanded] */
+    button[aria-expanded] {
         display: flex;
         flex-flow: row wrap;
         /* display: block; */

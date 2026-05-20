@@ -41,10 +41,85 @@
                     margin-bottom: 0;
                 }
             }
+
+            .foobar[class] {
+                --fndish-disclosure-border: 2px solid #0a0a0a;
+
+                /* Slotted elements are sill part of the Light DOM */
+
+                & .trigger {
+                    background-color: white;
+                    color: black;
+
+                    &[aria-expanded="true"] {
+                        margin-bottom: 1rem;
+                    }
+
+                    &::after {
+                        border-color: black;
+                    }
+                }
+
+                & .trigger + div {
+
+                }
+
+                & .trigger + div {
+                    opacity: 0;
+                    transition: opacity 1s;
+
+                    @starting-style {
+                        opacity: 0.8;
+                    }
+                }
+
+                &[expanded] .trigger + div {
+                    opacity: 0.8;
+                }
+            }
+
+            accordion-item.foobar[class] {
+                background-color: transparent;
+                --fndish-disclosure-border: 2px solid #0a0a0a;
+
+                /* OVERRIDES using ::part() */
+
+                &::part(disclosure) {
+                    border-radius: 10px;
+                    overflow: clip;
+                }
+
+                &::part(trigger) {
+                    background-color: #fff;
+                    outline: none;
+                    border:none;
+                    color: #121212;
+                    font-size: 1.2rem;
+                }
+
+                &::part(panel) {
+                    font-size: 1rem;
+                    background-color: black;
+                    overflow: hidden;
+                }
+            }
         </style>
 	</head>
 	<body>
         <h1>Accordion</h1>
+
+        <accordion-items role="region" aria-label="Shadow DOM Template" >
+
+            <accordion-item template class="right-icon foobar"></accordion-item>
+
+            <accordion-item class="right-icon foobar" expanded>
+                <button class="trigger" slot="trigger">Default Template 1</button>
+                <div hidden slot="panel">
+                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quo praesentium neque quos impedit deleniti sed possimus sit reiciendis repellat. Itaque ipsam perferendis esse incidunt suscipit tenetur quia in sunt laborum.</p>
+                </div>
+            </accordion-item>
+
+        </accordion-items>
 
         <accordion-items role="region" aria-label="Frequently Asked Questions" single-select>
 
@@ -63,7 +138,7 @@
                 </div>
             </accordion-item>
 
-            <accordion-item class="right-icon">
+            <accordion-item class="right-icon" expanded>
                 <button>3. Lorem ipsum dolor sit.</button>
                 <div>
                     <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
@@ -74,15 +149,15 @@
 
         <accordion-items role="region" aria-label="More Frequently Asked Questions" single-select>
 
-            <accordion-item class="right-icon" >
-                <details >
+            <accordion-item class="right-icon">
+                <details>
                     <summary>4. Lorem ipsum dolor sit.</summary>
                     <div>
                         <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
                     </div>
                 </details>
             </accordion-item>
-            <accordion-item class="right-icon" expanded>
+            <accordion-item class="right-icon" >
                 <details name="f00bartus">
                     <summary>5. Lorem ipsum dolor sit.</summary>
                     <div>
@@ -90,7 +165,7 @@
                     </div>
                 </details>
             </accordion-item>
-            <accordion-item class="right-icon" data-expanded expanded>
+            <accordion-item class="right-icon">
                 <details>
                     <summary>6. Lorem ipsum dolor sit.</summary>
                     <div>
@@ -98,8 +173,8 @@
                     </div>
                 </details>
             </accordion-item>
-            <accordion-item class="right-icon">
-                <details open>
+            <accordion-item class="right-icon" expanded>
+                <details>
                     <summary>7. Lorem ipsum dolor sit.</summary>
                     <div>
                         <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
