@@ -1,7 +1,7 @@
 customElements.define( 'accordion-item', class FoundationishAccordion extends HTMLElement {
 
     /**
-     * Fields
+     *  Fields
      */
 
     openedState = false;
@@ -24,24 +24,20 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
     // Cached detect parent accordion-items element for single-select attribute
     static singleSelectSupport = null;
 
+
     /**
-     * Observer attributes
+     *  Attributes
      */
 
-    // Observe the "opened" and "is-open" attributes for changes.
-    // The browser now watches for changes to this attribute and calls attributeChangedCallback() when it changes.
-    static get observedAttributes() {
+    /* Watch for attribute changes */
+    static get observedAttributes () {
         return ['ready', 'expanded'];
     }
 
-    /**
-     * Watch for attribute changes
-     */
+    /* When attributes change then do something */
+    attributeChangedCallback ( attrName, oldValue, newValue ) {
 
-    // This method is called whenever an observed attribute changes. It receives the name of the changed attribute, its old value, and its new value.
-    // Fires whenever an observed attribute changes. It receives the name of the changed attribute, its old value, and its new value.
-    attributeChangedCallback(attrName, oldValue, newValue) {
-
+        /* Custom HTML is provided */
         if ( this.detectCustomHTML() ) {
 
             switch ( attrName ) {
@@ -75,6 +71,7 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
         }
 
+         /* Details element is provided */
         if ( this.detectHTMLDetails() ) {
 
             switch ( attrName ) {
@@ -401,7 +398,7 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
             this.triggeredExternally = false;
 
-            this.emitBeforeToggle();
+            this.emitBeforeToggleEvent();
 
             if ( this.hasAttribute( this.attr.opened ) ) this.removeAttribute( this.attr.opened );
 
