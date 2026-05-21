@@ -25,25 +25,50 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
     // Cached detect parent accordion-items element for single-select attribute
     static singleSelectSupport = null;
 
-    #defaultTemplate = `
+    #defaultTemplateStyles = `
         <style>
             :host {
                 --test: red;
+                border-radius: var(--fndish-disclosure-radius, 4px);
             }
+
+            /*
+                Select light DOM content that has been slotted
+                into the shadow DOM.
+            */
+
+            :host slot[name="panel"]::slotted(div) {
+                background: darkblue;
+                padding-top: 1rem !important;
+            }
+
+            slot[name="panel"]::slotted(section) {
+                background: blue;
+                padding: 1rem !important;
+            }
+
+            slot[name="trigger"]::slotted(button) {
+                margin-block-end: 0 !important;
+            }
+
             .disclosure {
                 border: var(--fndish-disclosure-border, 1px solid #ccc);
-                border-radius: 4px;
+                border-radius: var(--fndish-disclosure-radius, 4px);
+                overflow: clip;
             }
+
+            accordion-item[expanded] {
+                --fndish-disclosure-radius: 1px;
+            }
+
             button {
-                cursor: pointer;
-                font-weight: bold;
                 padding: var(--fndish-disclosure-padding, 0.5rem);
+                padding-inline-start: 14px;
 
                 cursor: pointer;
                 appearance: none;
                 background: none;
                 position: relative;
-                padding-inline-start: 14px;
                 color: light-dark(black, white);
                 font-weight: bold;
 
@@ -59,7 +84,7 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
                 content: "";
                 border-right: 2px solid black;
                 border-bottom: 2px solid black;
-                margin-right: 0.45rem;
+                margin-right: 7.2px;
                 /* margin-left: auto; */
                 transform: translate(-1px, -0.5px) rotate(-45deg);
 
@@ -99,15 +124,26 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
                 padding: var(--fndish-disclosure-padding);
                 padding-block-start: 0;
             }
+
+
         </style>
+    `;
+
+    #defaultTemplate = `
+        ${this.#defaultTemplateStyles}
 
         <div class="disclosure" role="group" part="disclosure">
             <slot name="trigger">
-                <button class="trigger" part="trigger">Default Button</button>
+                <button class="trigger" part="trigger">
+                    <slot name="trigger-label">Default Label</slot>
+                </button>
             </slot>
             <slot name="panel">
                 <div class="panel" part="panel">
-                    <p>Default Default Default.</p>
+                    <slot name="panel-content">
+                        <p>Default panel content.</p>
+                        <p>Styled using ::part()</p>
+                    </slot>
                 </div>
             </slot>
         </div>
@@ -215,6 +251,44 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
                     let trigger = this.shadowRoot.querySelector('slot[name="trigger"]').assignedElements({ flatten: true })[0];
 
                     let panel = this.shadowRoot.querySelector('slot[name="panel"]').assignedElements({ flatten: true })[0];
+
+                    // ADDED
+                    if ( newValue === '' ) {
+
+                        // Update aria for trigger and panel
+                        this.expandedAttrHandler().setAria(trigger,panel);
+
+                        /* Except for the target, close all disclosures */
+                        if ( this.hasSingleSelectAttribute() ) {
+                            this.expandedAttrHandler().closeAll();
+                        }
+
+                    // REMOVED
+                    } else if ( newValue === null ) {
+
+                        // Update aria for trigger and panel
+                        this.expandedAttrHandler().setAria(trigger,panel);
+
+                    }
+
+                    break;
+
+                default:
+                    break;
+            }
+
+        }
+
+        /* Declarative Shadow Root */
+        else if ( !!this.shadowRoot ) {
+
+            switch ( attrName ) {
+
+                case 'expanded':
+
+                    let trigger = this.shadowRoot.querySelector('.trigger') ?? this.shadowRoot.querySelector('button[aria-expanded]');
+
+                    let panel = this.shadowRoot.querySelector('.panel') ?? this.shadowRoot.querySelector('button ~ [id]');
 
                     // ADDED
                     if ( newValue === '' ) {
@@ -393,10 +467,13 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
                 this.#renderCustomHTMLDisclosure().setAttsForDisclosure();
             }
 
-            if ( ! hasDeclarativeShadowRoot ) {
-
-            }
         }
+
+        // Has Declarative Shadow Root
+        else if (!!this.shadowRoot) {
+            this.#renderCustomHTMLDisclosure().setAttsForDisclosure();
+        }
+
 
 
         // Event listeners for details toggle and custom disclosure click
@@ -447,6 +524,8 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
             let trigger = button || root.querySelector(".disclosure > button"),
                 panel = content || root.querySelector(".disclosure > div");
+
+            console.log(trigger,panel);
 
             if (trigger === null) {
                 let triggerSlot = root.querySelector('slot[name="trigger"]');
@@ -706,6 +785,11 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
     /*
         Detection
     */
+
+    /* Detect Template */
+    detectHTMLTemplate () {
+        return this.querySelector('template');
+    }
 
     /* Detect details element */
     detectHTMLDetails() {

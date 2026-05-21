@@ -21,7 +21,7 @@
     details,
     .disclosure {
         border: var(--fndish-disclosure-border, 1px solid #ccc);
-        border-radius: 4px;
+        border-radius: var(--fndish-disclosure-radius, 4px);
     }
 
     summary,
@@ -149,5 +149,6 @@
         --fndish-disclosure-padding: 0.5rem;
         --fndish-disclosure-border: 1px solid #ccc;
         --accordion-open-summary-color: white;
+        --fndish-disclosure-radius: 0.5rem;
     }
 }
