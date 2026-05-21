@@ -18,55 +18,8 @@
 
 /* Core */
 @layer accordion.core {
-    details,
-    .disclosure {
-        border: var(--fndish-disclosure-border, 1px solid #ccc);
-        border-radius: var(--fndish-disclosure-radius, 4px);
-    }
+    accordion-item {
 
-    summary,
-    button[aria-expanded] {
-        cursor: pointer;
-        font-weight: bold;
-        padding: var(--fndish-disclosure-padding, 0.5rem);
-    }
-
-    details[open] summary,
-    .disclosure:has([aria-expanded="true"]) button {
-        color: var(--accordion-open-summary-color, #007BFF);
-    }
-
-    /* .disclosure > button[aria-expanded] */
-    button[aria-expanded] {
-        display: flex;
-        flex-flow: row wrap;
-        /* display: block; */
-        width: 100%;
-        text-align: left;
-    }
-
-    button[aria-expanded] {
-        cursor: pointer;
-        appearance: none;
-        background: none;
-        position: relative;
-        padding-inline-start: 14px;
-        color: light-dark(black, white);
-        font-weight: bold;
-    }
-
-    button::before {
-        /*
-        content: "";
-        border-right: 0.15em solid currentColor;
-        border-bottom: 0.15em solid currentColor;
-        margin-right: 0.25rem;
-        transform: translate(-3px, calc(-50% + 2px)) rotate(-45deg);
-        */
-    }
-
-    button[aria-expanded="true"]::before {
-        transform: translate(-1px, -50%) rotate(45deg);
     }
 
     .right-icon {
@@ -108,6 +61,55 @@
         }
     }
 
+    details,
+    .disclosure {
+        border: var(--fndish-disclosure-border, 1px solid #ccc);
+        border-radius: var(--fndish-disclosure-radius, 4px);
+    }
+
+    summary,
+    button[aria-expanded] {
+        cursor: pointer;
+        font-weight: bold;
+        padding: var(--fndish-disclosure-padding, 0.5rem);
+    }
+
+    details[open] summary,
+    .disclosure:has([aria-expanded="true"]) button {
+        color: var(--accordion-open-summary-color, #007BFF);
+    }
+
+    /* .disclosure > button[aria-expanded] */
+    button[aria-expanded] {
+        display: flex;
+        flex-flow: row wrap;
+        /* display: block; */
+        width: 100%;
+        text-align: left;
+
+        cursor: pointer;
+        appearance: none;
+        background: none;
+        position: relative;
+        padding-inline-start: 14px;
+        color: light-dark(black, white);
+        font-weight: bold;
+    }
+
+    button::before {
+        /*
+        content: "";
+        border-right: 0.15em solid currentColor;
+        border-bottom: 0.15em solid currentColor;
+        margin-right: 0.25rem;
+        transform: translate(-3px, calc(-50% + 2px)) rotate(-45deg);
+        */
+    }
+
+    button[aria-expanded="true"]::before {
+        transform: translate(-1px, -50%) rotate(45deg);
+    }
+
     :where(button[aria-expanded] + div[id]) {
         padding: var(--fndish-disclosure-padding);
         padding-block-start: 0;
@@ -141,6 +143,129 @@
             padding-inline-start: 1rem
         }
     }
+
+    accordion-item.animate-in-out {
+        --animate-delay: 0s;
+        --animate-speed: 250ms;
+        --animate-speed-delta: 50ms;
+
+        interpolate-size: allow-keywords;
+
+        /*
+            Disclosure using Custom Markup
+        */
+
+        /* Keep the closed panel transitionable even when the component adds [hidden]. */
+        & .disclosure > button + div {
+            overflow: clip;
+            block-size: 0;
+            opacity: 0;
+            display: none;
+
+            transition:
+                block-size var(--animate-speed, 250ms) var(--animate-delay) ease,
+                opacity calc( var(--animate-speed) - var(--animate-speed-delta) ) var(--animate-delay) ease,
+                display var(--animate-speed) var(--animate-delay) ease allow-discrete,
+                content-visibility var(--animate-speed) var(--animate-delay) ease allow-discrete;
+
+            @media (prefers-reduced-motion: reduce) {
+                transition: none;
+            }
+
+            /* Fix jank on collapse */
+            padding-bottom: 0;
+            & *:last-child {
+                padding-bottom: 1.05rem;
+            }
+        }
+
+        &[expanded] .disclosure > button + div {
+            block-size: auto;
+            opacity: 1;
+            display: block;
+
+            /* Start newly opened panels from the collapsed state before animating to auto. */
+            @starting-style {
+                & {
+                    block-size: 0;
+                    opacity: 0;
+                }
+            }
+        }
+
+        /*
+            Disclosure using Details
+        */
+
+        details::details-content {
+            block-size: 0;
+            overflow: clip;
+            opacity: 0;
+
+            transition:
+                block-size 250ms ease,
+                opacity 200ms ease,
+                content-visibility 250ms ease allow-discrete;
+        }
+
+        details[open]::details-content {
+            block-size: auto;
+            opacity: 1;
+        }
+
+        @starting-style {
+            details[open]::details-content {
+                block-size: 0;
+                opacity: 0;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            details::details-content {
+                transition: none;
+            }
+        }
+    }
+
+    accordion-item.animate-in {
+        --animate-delay: 0s;
+        --animate-speed: 250ms;
+        --animate-speed-delta: 50ms;
+
+        interpolate-size: allow-keywords;
+
+        /* Keep the closed panel transitionable even when the component adds [hidden]. */
+        & .disclosure > button + div {
+            overflow: clip;
+            block-size: 0;
+            opacity: 0;
+            /* display: none; */
+
+            transition:
+                block-size var(--animate-speed, 250ms) var(--animate-delay) ease,
+                opacity calc( var(--animate-speed) - var(--animate-speed-delta) ) var(--animate-delay) ease,
+                /* display var(--animate-speed) var(--animate-delay) ease allow-discrete, */
+                content-visibility var(--animate-speed) var(--animate-delay) ease allow-discrete;
+
+            @media (prefers-reduced-motion: reduce) {
+                transition: none;
+            }
+        }
+
+        &[expanded] .disclosure > button + div {
+            block-size: auto;
+            opacity: 1;
+            /* display: block; */
+
+            /* Start newly opened panels from the collapsed state before animating to auto. */
+            @starting-style {
+                & {
+                    block-size: 0;
+                    opacity: 0;
+                }
+            }
+        }
+    }
 }
 
 
@@ -152,3 +277,6 @@
         --fndish-disclosure-radius: 0.5rem;
     }
 }
+
+
+

@@ -16,9 +16,19 @@
       "default",
       {
         "ignore": [
-          "color: light-dark(black, white)"
+          "color: light-dark(black, white)",
+          "@starting-style"
         ]
       }
     ]
-  }
+  },
+  "browserslist": [
+    "defaults",
+    "not ie 11",
+    "not and_ff <= 139",
+    "not chrome <= 109",
+    "not firefox <= 139",
+    "not ios_saf <= 16.7",
+    "not samsung <= 28"
+  ]
 }
