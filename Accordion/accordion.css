@@ -8,8 +8,8 @@
     accordion.reset,
     accordion.tokens,
     accordion.core,
-    accordion.state,
     accordion.theme,
+    accordion.state,
     accordion.utilities;
 
 /* Reset */
@@ -18,99 +18,21 @@
 
 /* Core */
 @layer accordion.core {
-    accordion-item {
 
-    }
-
-    .right-icon {
-        --expanded-icon-rotation: 45deg;
-
-        :where(button[aria-expanded], summary) {
-            display: flex;
-            flex-flow: row wrap;
-            align-items: center;
-            justify-content: space-between;
-            padding-inline-start: calc(14px/16px*1rem);
-
-            &::after {
-            }
-
-            &::after {
-                content: "";
-                border-right: 0.15em solid currentColor;
-                border-bottom: 0.15em solid currentColor;
-                margin-right: 0.45rem;
-                /* margin-left: auto; */
-                transform: translate(-1px, -0.5px) rotate(-45deg);
-
-                position: relative;
-                display: inline-block;
-                width: 0.5em;
-                height: 0.5em;
-                transition: 0.075s transform ease-out;
-                pointer-events: none;
-            }
-
-            &[aria-expanded="true"]::after {
-                transform: translate(-1px, -0.5px) rotate(var(--expanded-icon-rotation, 45deg));
-            }
-        }
-
-        details[open] summary::after {
-            transform: translate(-1px, -0.5px) rotate(var(--expanded-icon-rotation, 45deg));
-        }
-    }
-
-    details,
-    .disclosure {
-        border: var(--fndish-disclosure-border, 1px solid #ccc);
-        border-radius: var(--fndish-disclosure-radius, 4px);
-    }
-
-    summary,
-    button[aria-expanded] {
-        cursor: pointer;
-        font-weight: bold;
-        padding: var(--fndish-disclosure-padding, 0.5rem);
-    }
-
-    details[open] summary,
-    .disclosure:has([aria-expanded="true"]) button {
-        color: var(--accordion-open-summary-color, #007BFF);
-    }
-
-    /* .disclosure > button[aria-expanded] */
-    button[aria-expanded] {
-        display: flex;
-        flex-flow: row wrap;
-        /* display: block; */
-        width: 100%;
-        text-align: left;
-
+    button {
         cursor: pointer;
         appearance: none;
         background: none;
+
+        display: flex;
+        flex-flow: row wrap;
+        width: 100%;
         position: relative;
-        padding-inline-start: 14px;
-        color: light-dark(black, white);
-        font-weight: bold;
+
+        text-align: left;
     }
 
-    button::before {
-        /*
-        content: "";
-        border-right: 0.15em solid currentColor;
-        border-bottom: 0.15em solid currentColor;
-        margin-right: 0.25rem;
-        transform: translate(-3px, calc(-50% + 2px)) rotate(-45deg);
-        */
-    }
-
-    button[aria-expanded="true"]::before {
-        transform: translate(-1px, -50%) rotate(45deg);
-    }
-
-    :where(button[aria-expanded] + div[id]) {
+    button[aria-expanded] + div[id] {
         padding: var(--fndish-disclosure-padding);
         padding-block-start: 0;
         padding-block-end: 1.05rem;
@@ -124,18 +46,6 @@
     }
 
     details {
-        & summary {
-            list-style: none;
-
-            &::marker {
-                content: none;
-            }
-
-            &::-webkit-details-marker {
-                display: none;
-            }
-        }
-
         & summary + :where(*) {
             padding: var(--fndish-disclosure-padding);
             padding-block-start: 0;
@@ -266,6 +176,110 @@
             }
         }
     }
+}
+
+@layer accordion.theme {
+
+    /* Global */
+    details,
+    .disclosure {
+        border: var(--fndish-disclosure-border, 1px solid #ccc);
+        border-radius: var(--fndish-disclosure-radius, calc(14/16*1rem));
+    }
+
+    summary,
+    button[aria-expanded] {
+        cursor: pointer;
+
+        color: var(--accordion-open-summary-color, white);
+        font-weight: bold;
+        text-align: left;
+
+        padding: var(--fndish-disclosure-padding, 0.5rem);
+        padding-inline-start: 14px;
+
+        display: flex;
+        flex-flow: row wrap;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    details[open] summary,
+    button[aria-expanded="true"] {
+        color: light-dark(black, white);
+        font-weight: bold;
+    }
+
+    /* Icon */
+    .right-icon :is(button, summary),
+    .left-icon :is(button, summary) {
+        --expanded-icon-rotation: 45deg;
+
+        & {
+            list-style: none;
+
+            &::marker {
+                content: none;
+            }
+
+            &::-webkit-details-marker {
+                display: none;
+            }
+        }
+
+
+         &::after {
+            content: "";
+            border-right: 0.15em solid currentColor;
+            border-bottom: 0.15em solid currentColor;
+            margin-right: 0.45rem;
+            /* margin-left: auto; */
+            transform: translate(-1px, -0.5px) rotate(-45deg);
+
+            position: relative;
+            display: inline-block;
+            width: 0.5em;
+            height: 0.5em;
+            transition: 0.075s transform ease-out;
+            pointer-events: none;
+        }
+
+        &[aria-expanded="true"]::before {
+            transform: translate(-1px, -1.5px) rotate(var(--expanded-icon-rotation, 45deg));
+        }
+
+        &[aria-expanded="true"]::after {
+            transform: translate(-1px, -0.5px) rotate(var(--expanded-icon-rotation, 45deg));
+        }
+    }
+    .left-icon :is(button, summary) {
+        justify-content: flex-start;
+
+        &::after { display: none; }
+
+        &::before {
+            content: "";
+            border-right: 0.15em solid currentColor;
+            border-bottom: 0.15em solid currentColor;
+            margin-right: 0.45rem;
+            /* margin-left: auto; */
+            transform: translate(-1px, -0.5px) rotate(-45deg);
+
+            position: relative;
+            display: inline-block;
+            width: 0.5em;
+            height: 0.5em;
+            transition: 0.075s transform ease-out;
+            pointer-events: none;
+        }
+    }
+    .left-icon[class] details[open] summary::before {
+        transform: translate(-1px, -50%) rotate(45deg);
+    }
+    .right-icon[class] details[open] summary::after {
+        transform: translate(-1px, -0.5px) rotate(var(--expanded-icon-rotation, 45deg));
+    }
+
 }
 
 
