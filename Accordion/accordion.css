@@ -60,12 +60,18 @@
         --animate-speed-delta: 50ms;
 
         interpolate-size: allow-keywords;
+        overflow-y: hidden;
 
         /*
             Disclosure using Custom Markup
         */
 
         /* Keep the closed panel transitionable even when the component adds [hidden]. */
+        & .disclosure {
+            /* NOTE: Check why overflow hidden is fix where overflow clip is not. */
+            /* overflow: hidden; */
+        }
+
         & .disclosure > button + div {
             overflow: clip;
             block-size: 0;
@@ -180,11 +186,31 @@
 
 @layer accordion.theme {
 
+    accordion-item {
+         --color-active: #b7b923;
+        border-radius: var(--fndish-disclosure-radius);
+
+        &[expanded] {
+            box-shadow: 0 0 0 1.5px var(--color-active);
+        }
+    }
+
     /* Global */
     details,
     .disclosure {
-        border: var(--fndish-disclosure-border, 1px solid #ccc);
+        --color-active: #b7b923;
+        border: var(--fndish-disclosure-border, 1px solid white);
         border-radius: var(--fndish-disclosure-radius, calc(14/16*1rem));
+        box-shadow: 0 0 0.1px var(--color-active);
+        transition: border-color 0.15s, box-shadow 0.15s;
+
+        &:has(details:hover),
+        &:has(button:hover) {
+            /* --fndish-disclosure-border: 1px solid var(--color-active); */
+
+            /* NOTE: will not work due to overflow */
+            /* box-shadow: 0 0 0 3px var(--color-active); */
+        }
     }
 
     summary,
@@ -286,7 +312,7 @@
 @layer accordion.tokens {
     :root {
         --fndish-disclosure-padding: 0.5rem;
-        --fndish-disclosure-border: 1px solid #ccc;
+        --fndish-disclosure-border: 1px solid #214f71;
         --accordion-open-summary-color: white;
         --fndish-disclosure-radius: 0.5rem;
     }
