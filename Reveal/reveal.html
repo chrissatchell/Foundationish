@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Reveal - Foundation(ish) Accessible Components</title>
+        <!-- <link rel="stylesheet" href="./reveal.css" /> -->
+	</head>
+	<body class="superbody">
+
+        <h1><code>&lt;reveal-dialog modal&gt;</code></h1>
+        <style>
+            section {
+                position: relative;
+                margin: 10rem 2rem 2rem;
+            }
+
+            /* 1. Define the anchor name on the button */
+            #mii-button {
+                anchor-name: --button-anchor;
+            }
+
+            /* 2. Base styles for the popover (CLOSED STATE) */
+            #mii-popover {
+                --duration: 0.15s;
+
+                /* Remove default center positioning */
+                position: absolute;
+                inset: auto;
+
+                /* Connect the popover to the anchor name */
+                position-anchor: --button-anchor;
+
+                /* Align the top of the popover to the bottom of the button */
+                top: anchor(bottom);
+
+                /* Align the right edge of the popover to the right edge of the button */
+                left: anchor(right);
+
+                /* Apply the fade-out animation timeline by default when closing */
+                animation: fade-out var(--duration) ease-in-out forwards;
+
+                /* CRITICAL: Allows discrete properties like 'display' and 'overlay'
+                to smoothly transition alongside our keyframe animations */
+                /* overlay Tells the top-layer engine to wait var(--duration) before dropping the element */
+                transition: display var(--duration) allow-discrete, overlay var(--duration) allow-discrete;
+
+                /*
+                    NOTE about overlay
+
+                    In the context of CSS entry and exit animations (especially for elements like popover or <dialog>), overlay is a native CSS property that controls whether an element is rendered in the browser's Top Layer.
+
+                    The Top Layer is a special, invisible plane in the browser window that sits above all other elements on the page, completely ignoring standard z-index rules or stacking contexts.
+
+                    Why do we need the overlay property?
+                    Historically, when you opened a modal or popup, the browser instantly slapped it onto the top layer. When you closed it, the browser instantly stripped it from the top layer.
+
+                    Because this happened instantaneously, it was impossible to animate a fade-out. The exact moment your popover lost its :popover-open state, it fell off the top layer and vanished behind other elements, completely skipping your var(--duration) fade-out timeline.
+
+                    How it works with animations
+                    By adding overlay to your CSS transition list with the allow-discrete modifier, you tell the browser:
+
+                    "When this popover closes, don't kick it out of the top layer immediately. Keep it up there on top for the duration of the animation so the user can actually see it fade away."
+                */
+            }
+
+            /* 3. Styles when the popover is OPEN */
+            #mii-popover:popover-open {
+                /* Apply the fade-in animation when opening */
+                animation: fade-in var(--duration) ease-in-out forwards;
+            }
+
+            /* 4. The starting state *before* it opens */
+            @starting-style {
+                #mii-popover:popover-open {
+                    opacity: 0;
+                }
+            }
+
+            /* 5. Keyframe Definitions */
+            @keyframes fade-in {
+                from {
+                    opacity: 0;
+                }
+                to {
+                    opacity: 1;
+                }
+            }
+
+            @keyframes fade-out {
+                from {
+                    opacity: 1;
+                }
+                to {
+                    opacity: 0;
+                }
+            }
+        </style>
+        <section>
+
+            <button id="mii-button" popovertarget="mii-popover" class="project-archives-button">
+                View All
+            </button>
+
+            <div aria-modal="true" id="mii-popover" popover>
+
+                <div class="dialog-page">
+
+                    <div class="dialog-container">
+
+                        <div class="dialog-body">
+
+                            <div class="dialog-header">
+
+                                <button class="close" aria-label="Close the dialog" popovertarget="mii-popover" popovertargetaction="hide">
+                                    &#10005;
+                                </button>
+
+                            </div>
+
+                            <div class="dialog-content">
+
+                                <div class="popover-container">
+
+                                    <ul class="projects-summaries">
+
+                                        <li class="project-summary">
+                                            <div class="project-card">
+                                                <div class="project-card__body">
+                                                    <h3>EllisDon Developments</h3>
+                                                    <a href="https://ellisdondevelopments.com/" class="project-link" target="_blank" rel="noopener noreferrer">ellisdondevelopments.com</a>
+                                                </div>
+                                                <div class="project-card__meta">
+                                                    <div class="project-meta">
+                                                        <p><b>Responsibilies &amp; Roles</b></p>
+                                                        <ul class="project-roles" aria-label="Responsibilies &amp; Roles">
+                                                            <li>Front-End Development<span>,</span></li>
+                                                            <li>Theme Development<span>,</span></li>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="project-meta">
+                                                        <p><b>Tech Stack</b></p>
+                                                        <ul class="project-tags" aria-label="Technology">
+                                                            <li>PHP<span>,</span></li>
+                                                            <li>WordPress<span>,</span></li>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="project-meta">
+                                                        <p class="project-agency">
+                                                            <b>Agency</b> nvision
+                                                        </p>
+                                                    </div>
+                                                    <div class="project-meta">
+                                                        <p class="project-status">
+                                                            <b>Status</b> live
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <!--
+                                        <li class="project-summary">
+                                            <div class="project-card">
+                                                <div class="project-card__body">
+                                                    <h3>ModiFace (L'Oreal)</h3>
+                                                    <a href="https://modiface.com/" class="project-link" target="_blank" rel="noopener noreferrer">modiface.com</a>
+                                                </div>
+                                                <div class="project-card__meta">
+                                                    <div class="project-meta">
+                                                        <p><b>Responsibilies &amp; Roles</b></p>
+                                                        <ul class="project-roles" aria-label="Responsibilies &amp; Roles">
+                                                            <li>Front-End<span>,</span></li>
+                                                            <li>Theme Development<span>,</span></li>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="project-meta">
+                                                        <p><b>Tech Stack</b></p>
+                                                        <ul class="project-tags" aria-label="Technology">
+                                                            <li>JavaScript<span>,</span></li>
+                                                            <li>Sass (SCSS)<span>,</span></li>
+                                                            <li>PHP<span>,</span></li>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="project-meta">
+                                                        <p class="project-agency">
+                                                            <b>Agency</b> nvision
+                                                        </p>
+                                                    </div>
+                                                    <div class="project-meta">
+                                                        <p class="project-status">
+                                                            <b>Status</b> live
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                        <li class="project-summary">
+                                            <div class="project-card">
+                                                <div class="project-card__body">
+                                                    <h3>Auralites</h3>
+                                                    <a href="https://auralites.com/" class="project-link" target="_blank" rel="noopener noreferrer">auralites.com</a>
+                                                </div>
+                                                <div class="project-card__meta">
+                                                    <div class="project-meta">
+                                                        <p><b>Responsibilies &amp; Roles</b></p>
+                                                        <ul class="project-roles" aria-label="Responsibilies &amp; Roles">
+                                                            <li>Front-End<span>,</span></li>
+                                                            <li>Theme Customization<span>,</span></li>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="project-meta">
+                                                        <p><b>Tech Stack</b></p>
+                                                        <ul class="project-tags" aria-label="Technology">
+                                                            <li>Shopify<span>,</span></li>
+                                                            <li>Liquid<span>,</span></li>
+                                                        </ul>
+                                                    </div>
+                                                    <div class="project-meta">
+                                                        <p class="project-agency">
+                                                            <b>Agency</b> Splash Engine
+                                                        </p>
+                                                    </div>
+                                                    <div class="project-meta">
+                                                        <p class="project-status">
+                                                            <b>Status</b> Live
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                            -->
+                                    </ul>
+
+                                </div>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
+    <script src="./reveal.js"></script>
+    </body>
+</html>
