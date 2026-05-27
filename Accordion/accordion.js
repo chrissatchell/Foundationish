@@ -5,7 +5,7 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
      */
 
 
-    openedState = false;
+    expanded = false;
 
     panelID = false;
 
@@ -25,107 +25,7 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
     };
 
     #defaultTemplateStyles = `
-        <style>
-            :host {
-                --test: red;
-                border-radius: var(--fndish-disclosure-radius, 4px);
-            }
-
-            /*
-                Select light DOM content that has been slotted
-                into the shadow DOM.
-            */
-
-            :host slot[name="panel"]::slotted(div) {
-                background: darkblue;
-                padding-top: 1rem !important;
-            }
-
-            slot[name="panel"]::slotted(section) {
-                background: blue;
-                padding: 1rem !important;
-            }
-
-            slot[name="trigger"]::slotted(button) {
-                margin-block-end: 0 !important;
-            }
-
-            .disclosure {
-                border: var(--fndish-disclosure-border, 1px solid #ccc);
-                border-radius: var(--fndish-disclosure-radius, 4px);
-                overflow: clip;
-            }
-
-            accordion-item[expanded] {
-                --fndish-disclosure-radius: 1px;
-            }
-
-            button {
-                padding: var(--fndish-disclosure-padding, 0.5rem);
-                padding-inline-start: 14px;
-
-                cursor: pointer;
-                appearance: none;
-                background: none;
-                position: relative;
-                color: light-dark(black, white);
-                font-weight: bold;
-
-                display: flex;
-                flex-flow: row wrap;
-                align-items: center;
-                justify-content: space-between;
-                padding-inline-start: calc(14px/16px*1rem);
-                width: 100%
-            }
-
-            button::after {
-                content: "";
-                border-right: 2px solid black;
-                border-bottom: 2px solid black;
-                margin-right: 7.2px;
-                /* margin-left: auto; */
-                transform: translate(-1px, -0.5px) rotate(-45deg);
-
-                position: relative;
-                display: inline-block;
-                width: 7px;
-                height: 7px;
-                transition: 0.075s transform ease-out;
-                pointer-events: none;
-            }
-
-            button[aria-expanded="true"]::after {
-                transform: translate(-1px, -0.5px) rotate(var(--expanded-icon-rotation, 45deg));
-            }
-
-            .disclosure:has([aria-expanded="true"]) button {
-                color: var(--accordion-open-summary-color, #007BFF);
-                }
-
-            .disclosure button {
-                outline:1px solid red;
-            }
-
-            div[id] {
-                padding: var(--fndish-disclosure-padding);
-                padding-block-start: 0;
-                padding-block-end: 1.05rem;
-                padding-inline-start: 1rem;
-
-                & p {
-                    margin-block-end: 0;
-                }
-            }
-
-            :where(summary + div),
-            summary::details-content {
-                padding: var(--fndish-disclosure-padding);
-                padding-block-start: 0;
-            }
-
-
-        </style>
+        <style>@import url('./accordion.css');</style>
     `;
 
     #defaultTemplate = `
@@ -141,6 +41,7 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
                 <div class="panel" part="panel">
                     <slot name="panel-content">
                         <p>Default panel content.</p>
+
                         <p>Styled using ::part()</p>
                     </slot>
                 </div>
@@ -530,16 +431,18 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
         let shadowStylesAttr = this.getAttribute('shadowstyles')?.trim();
 
-        if ( shadowStylesAttr == 'pretty' ) {
+        // if ( shadowStylesAttr == 'pretty' ) {
 
-            let prettyStyles = `
-                <style>@import url('./accordion.css');</style>
-                <style>@import url('./import-styles.css');</style>
-            `;
+        //     let prettyStyles = `
+        //         <style>@import url('./accordion.css');</style>
+        //         <style>@import url('./import-styles.css');</style>
+        //     `;
 
-            this.renderShadowStyles({ customStyles: prettyStyles });
+        //     this.renderShadowStyles({ customStyles: prettyStyles });
 
-        } else if (
+        // }
+
+        if (
             shadowStylesAttr !== null
             && (
                 typeof shadowStylesAttr === 'string'
@@ -754,9 +657,7 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
             new CustomEvent('accordionitem:is-ready', {
                 bubbles: true,
                 cancelable: false,
-                detail: {
-                    openedState: this.openedState
-                }
+                detail: { expanded: this.expanded }
             } )
         );
     }
@@ -864,17 +765,7 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
         return this.getAttribute( attrName ) ? true : false;
     }
 
-    getOpenedState() {
-        let {log} = console;
-        if (this.querySelector("details") !== null) {
-            return this.querySelector("details").hasAttribute("open") ? true : false;
-        } else if (this.querySelector(".disclosure > button") !== null) {
-            // Handle custom disclosure logic
-            return this.querySelector(".disclosure > button").getAttribute("aria-expanded") === "true" ? true : false;
-        } else {
-            return false;
-        }
-    }
+
 
 
 
