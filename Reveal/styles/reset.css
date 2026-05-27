@@ -6,7 +6,7 @@
     and "Preflight" by Tailwind https://tailwindcss.com/docs/preflight
 */
 
-@layer reset {
+@layer resetty {
 
     @media (prefers-reduced-motion: no-preference) {
         @view-transition {
@@ -200,6 +200,7 @@
     }
 
     input, select, textarea, button {
+        cursor: pointer;
         font: inherit;
         /* appearance: base; */
     }

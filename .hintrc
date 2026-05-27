@@ -17,7 +17,8 @@
       {
         "ignore": [
           "color: light-dark(black, white)",
-          "@starting-style"
+          "@starting-style",
+          "backdrop-filter"
         ]
       }
     ]

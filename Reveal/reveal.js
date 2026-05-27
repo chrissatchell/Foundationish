@@ -10,7 +10,7 @@ customElements.define( 'reveal-dialog', class FoundationishReveal extends HTMLEl
         template: "template"
     };
 
-
+    log = console.log;
 
     /**
      *  Attributes
@@ -117,7 +117,128 @@ customElements.define( 'reveal-dialog', class FoundationishReveal extends HTMLEl
 
     render() {
 
+        let {log} = this;
 
+        let $trigger = this.querySelector('[data-open]');
+
+        let $dialog = $trigger
+                        ? this.querySelector( '#' + $trigger.getAttribute( 'data-open' ) )
+                        : false;
+
+        // log($dialog);
+
+        this.addEventListener( "click", ( event ) => {
+
+            log(event.target);
+
+            event.preventDefault();
+
+            /**
+             * NOTE: Updates to use event.target instead of trigger
+             *       so the proper context is captured
+             *       and not applied to all button elements (and respective dislogs)
+            */
+
+
+            let displayHandler = () => {
+
+                // Close button
+                if ( event.target.getAttribute("popovertargetaction") == "hide" ) {
+
+                    // Close the referenced dialog, or fall back to the nearest open dialog.
+                    const closingDialog = $dialog?.open ? $dialog : event.target.closest('dialog');
+
+                    if ( closingDialog?.open ) closingDialog.close();
+
+                    document.documentElement.classList.remove("has-open-modal");
+
+                    // IMPORTANT: don't fall through (continue on ...) to show logic
+                    return;
+
+                }
+
+                // Open modal
+                if (
+                    ! $dialog.hasAttribute( 'open' )
+                    && ( event.target.getAttribute('data-open') === $dialog.id )
+                ) {
+
+                    $dialog.showModal();
+
+                    document.documentElement.classList.add("has-open-modal");
+
+                }
+
+            };
+
+            // Dialog handler
+            if ( $dialog.getAttribute("aria-modal") === "true" ) {
+
+                displayHandler();
+
+            } else {
+
+                console.warn('Dialog is missing aria-modal="true"')
+
+            }
+
+
+        });
+
+        $dialog.addEventListener("cancel", function (event) {
+            if ( document.documentElement.classList.contains("has-open-modal") ) {
+                document.documentElement.classList.remove("has-open-modal");
+            }
+        });
+
+        $dialog.addEventListener("close", function (event) {});
+
+        /* ::backdrop JS (defer .close() until fade finishes) */
+        (function () {
+            const dlg = document.querySelector("dialog");
+            const EXIT_MS = 500; // keep in sync with --backdrop-display-timing
+
+            function closeWithFade(d) {
+                if (!d.open || d.classList.contains("closing")) return;
+                d.classList.add("closing");
+
+                const done = () => {
+                    d.classList.remove("closing");
+                    d.close(); // now ::backdrop is removed, after fade
+                };
+
+                // Prefer transitionend; fallback timeout just in case
+                let doneCalled = false;
+                const onEnd = (e) => {
+                    if (doneCalled) return;
+                    // We can listen on the dialog (for its own opacity/transform) or just time out.
+                    doneCalled = true;
+                    d.removeEventListener("transitionend", onEnd);
+                    done();
+                };
+
+                d.addEventListener("transitionend", onEnd, { once: true });
+                setTimeout(onEnd, EXIT_MS + 50);
+            }
+
+            /* Intercept Esc-based closing */
+            if (dlg) {
+                dlg.addEventListener("cancel", (e) => {
+                    e.preventDefault(); // stop instant close
+                    closeWithFade(dlg); // run our exit animation
+                });
+            }
+
+            /* Example: bind your close buttons */
+            document.addEventListener("click", (e) => {
+                if (e.target.matches("[data-close-dialog]")) {
+                    e.preventDefault();
+                    if (dlg) closeWithFade(dlg);
+                }
+            });
+        })();
+
+        return true
     }
 
 
