@@ -20,30 +20,26 @@
 @layer reveal.tokens {
     :host,
     reveal-dialog  {
-        --reveal-display-timing: 2s;
-        --reveal-display-delay: 0.1s;
-        --reveal-backdrop-blur: 2px;
-        --reveal-backdrop-display-timing: 0.25s;
 
-        /* 1. Colours */
+        --reveal-max-width: calc(960 / 16 * 1rem);
+        --reveal-offset-y: 5rem;  /* 2.65rem */
+        --reveal-scrollbar-gutter-width: 1rem;
+
+        --reveal-display-timing: 0.45s;
+        --reveal-backdrop-display-timing: 1s;
+
+        --reveal-backdrop-blur: 1px;
+        --reveal-backdrop-bg: transparent; /* #333333e8; */
+
         --color-primary: hsl(210 100% 80.6%); /* #9cceff */
-
         --color-softwhite: #f5f5ed;
         --color-grey: rgb(170, 170, 170);
-
+        --color-gray-3:  hsl(0, 0%, 86%);
         --color-focus: #0071e3;
         --color-amber: #ffe082;
-        --color-gray-3:  hsl(0, 0%, 86%);       /* gainsboro (#dcdcdc) */
 
-        /* 2. Typography */
         --font-serif: "PT Serif", Georgia, Palatino, "Palatino Linotype", serif;
         --font-sans: "Helvetica Neue", Helvetica, Arial, sans-serif;
-
-        /* 3. Sizing */
-        --container-width-xs: calc(710 / 16 * 1rem); /* 710px */
-        --container-width-sm: calc(960 / 16 * 1rem); /* 960px */
-        --container-width: calc(1440 / 16 * 1rem); /* 1440px */
-        --container-width-lg: calc(1872 / 16 * 1rem); /* 1872px */
     }
 }
 
@@ -61,9 +57,8 @@
 
 }
 
-
 @layer reveal.theme {
-    :root:has(dialog.full-page) {
+    :root:has(dialog.fullish-width) {
         /* transition: var(--reveal-display-timing) filter ease-in; */
     }
 
@@ -109,11 +104,8 @@
         }
     }
 
-    /* Full Page Modal */
-    dialog[aria-modal="true"].full-page {
-        --max-width: calc(960 / 16 * 1rem);
-        --offset-y: 2.65rem;
-        --scrollbar-gutter-width: 1rem;
+    /* Full(ish) Page Modal */
+    dialog.fullish-width {
 
         background-color: transparent;
         border-radius: 0;
@@ -135,62 +127,7 @@
         height: 100dvh;
         overflow: hidden;
 
-        transform: translate(0, 148px);
-
-        /*
-            Animate dialog
-        */
-
-        opacity: 0;
-        transition: opacity 0.2s,
-                    display var(--reveal-display-timing, 0.5s) allow-discrete,
-                    overlay var(--reveal-display-timing, 0.5s) allow-discrete,
-                    transform 0.5s;
-
-        &[open] {
-            opacity: 1;
-            transform: translate(0, 0);
-
-            @starting-style {
-                & {
-                    opacity: 0;
-                }
-            }
-        }
-
-        /*
-            Animate dialog backdrop
-        */
-        &::backdrop {
-            opacity: 0;
-            backdrop-filter: blur(var(--reveal-backdrop-blur));
-            background-color: rgba(201, 201, 201, 0.879);
-            will-change: opacity;
-
-            transition:
-                display var(--reveal-backdrop-display-timing, 0.5s),
-                overlay var(--reveal-backdrop-display-timing, 0.5s), /* required */
-                opacity var(--reveal-backdrop-display-timing, 0.5s), /* required */
-                backdrop-filter var(--reveal-backdrop-display-timing, 0.5s);
-
-            transition-behavior: allow-discrete;
-        }
-
-        /* On open, transition to... */
-        &[open]::backdrop {
-            /* backdrop-filter: blur(2px); */
-            /* background-color: rgba( 0 0 0 / 75% ); */
-            opacity: 1;
-        }
-
-        /* On open, starting-style */
-        @starting-style {
-            &[open]::backdrop {
-                opacity: 0;
-            }
-        }
-
-        .dialog-page {
+        & .dialog-page {
             position: relative;
 
             /* 2. The secret sauce that allows scroll */
@@ -198,29 +135,29 @@
             overflow: auto;
 
             /* Scrollbar gutter */
-            padding-inline-end: var(--scrollbar-gutter-width);
+            padding-inline-end: var(--reveal-scrollbar-gutter-width);
         }
 
-        .dialog-container {
-            padding-top: var(--offset-y);
+        & .dialog-container {
+            padding-top: var(--reveal-offset-y);
         }
 
-        .dialog-body {
+        & .dialog-body {
             overflow: clip;
-            width: min( calc(100dvw - var(--scrollbar-gutter-width) * 3), var(--max-width));
+            width: min( calc(100dvw - var(--reveal-scrollbar-gutter-width) * 3), var(--reveal-max-width));
             background-color: rgb(252 252 252);
             /* backdrop-filter: blur(30px); */
             color: var(--color-black);
             outline: none;
             border: none;
             border-radius: 1.5rem;
-            margin-bottom: var(--offset-y);
+            margin-bottom: var(--reveal-offset-y);
 
             /* center */
             margin-inline: auto;
 
             /* Fix body horzontal centering related to the scroll gutter */
-            transform: translateX(calc(var(--scrollbar-gutter-width) / 2) );
+            transform: translateX(calc(var(--reveal-scrollbar-gutter-width) / 2) );
 
             @media (width <= 640px) {
                 width: 100dvw;
@@ -228,9 +165,10 @@
             }
         }
 
-        .dialog-header {
+        & .dialog-header {
             display: flex;
             align-items: flex-start;
+
             position: sticky;
             top: 0;
             z-index: 2;
@@ -249,7 +187,7 @@
             }
         }
 
-        .dialog-content {
+        & .dialog-content {
             padding: 0.75rem 4.75rem 4rem;
 
             @media (width <= 780px) {
@@ -257,7 +195,7 @@
             }
         }
 
-        .close {
+        & .close {
             padding-inline: 0.7rem;
             transform: translateX(1rem);
         }
@@ -265,6 +203,11 @@
 
     dialog[aria-modal="true"].full-height {
         .dialog-container {
+            /* NOTE: remove if you need the margin bottom to create space
+                     between the modal and the bottom of the page when
+                     the modal is vertically longer, and extends pasts,
+                     the window height.
+            */
             min-height: 100%;
         }
         .dialog-body {
@@ -276,7 +219,7 @@
     }
 
     /* Close button */
-    :where(button).close {
+    button.close {
         display: inline-flex;
         margin-left: auto;
         padding: 0.25rem 1.75rem;
@@ -299,5 +242,140 @@
             background-color: black;
             color: white;
         }
+    }
+}
+
+@layer reveal.animation {
+
+    dialog.animate-in-out {
+
+        /*****
+            Animate dialog
+        ******/
+
+        opacity: 0;
+        transition: opacity var(--reveal-display-timing),
+                    display var(--reveal-display-timing, 0.25s) allow-discrete;
+
+        &[open] {
+            opacity: 1;
+
+            @starting-style {
+                & {
+                    opacity: 0;
+                }
+            }
+        }
+
+        /*****
+            Animate dialog backdrop
+        *****/
+
+        &::backdrop {
+            background-color: var(--reveal-backdrop-bg);
+
+            opacity: 0;
+            /* backdrop-filter: blur(var(--reveal-backdrop-blur));
+            will-change: opacity;
+
+            transition:
+                display var(--reveal-backdrop-display-timing, 0.25s) allow-discrete,
+                overlay var(--reveal-backdrop-display-timing, 0.25s) allow-discrete,
+                opacity var(--reveal-backdrop-display-timing, 0.25s),
+                backdrop-filter var(--reveal-backdrop-display-timing, 0.25s); */
+        }
+        &[open]::backdrop {
+            opacity: 1;
+        }
+        @starting-style {
+            &[open]::backdrop {
+                opacity: 0;
+            }
+        }
+    }
+}
+
+@layer reveal.demo {
+    :where(body) {
+        padding: 2rem;
+        font-family: sans-serif;
+        background-color: #193549;
+    }
+
+    h1,h2, h3 {
+        margin-bottom: 2rem;
+    }
+
+    p {
+        margin-bottom: 2rem;
+    }
+
+    :host,
+    accordion-item {
+        background-color: #333;
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    accordion-items {
+        background-color: #0000005e;
+    }
+
+    reveal-dialog {
+        display: block;
+        background-color: #0000005e;
+        padding: 1rem;
+        margin-block-end: 1.5rem;
+        border-radius:1rem;
+        width: min(95dvw, 300px);
+    }
+
+    reveal-dialog > button {
+        --reset-body-line-height: 1.5;
+        --fndish-disclosure-padding: 0.5rem;
+        --fndish-disclosure-border: 1px solid #214f71;
+        --accordion-open-summary-color: white;
+        --fndish-disclosure-radius: 0.5rem;
+        -webkit-font-smoothing: antialiased;
+        --animate-delay: 0s;
+        --animate-speed: 250ms;
+        --animate-speed-delta: 50ms;
+        interpolate-size: allow-keywords;
+        --color-active: #b7b923;
+        box-sizing: border-box;
+        margin: 0;
+        font: inherit;
+        border: 1px solid transparent;
+        appearance: none;
+        background: none;
+        width: 100%;
+        position: relative;
+        cursor: pointer;
+        color: var(--accordion-open-summary-color, white);
+        font-weight: bold;
+        text-align: left;
+        padding: var(--fndish-disclosure-padding, 0.5rem);
+        padding-inline-start: 14px;
+        display: flex;
+        flex-flow: row wrap;
+        align-items: center;
+        justify-content: space-between;
+        --expanded-icon-rotation: 45deg;
+        list-style: none;
+
+
+        background-color: #333;
+        padding: 0.5rem !important;
+        padding-inline-start: 14px !important;
+        padding-inline-end: 12px !important;
+        border: var(--fndish-disclosure-border, 1px solid white);
+        border-radius: var(--fndish-disclosure-radius, calc(14 / 16 * 1rem));
+    }
+
+    p {
+        font-size: 18px;
+        line-height: 1.5;
+        font-weight: 500;
     }
 }

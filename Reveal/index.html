@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Reveal - Foundation(ish) Accessible Components</title>
+        <link rel="stylesheet" href="./reveal.css" />
+        <style>
+            body {
+                padding: 2rem
+            }
+            button {
+
+            }
+        </style>
+	</head>
+	<body class="superbody">
+
+        <h1>
+            <code>
+                &lt;reveal-dialog modal&gt;
+            </code>
+        </h1>
+
+        <br>
+
+        <reveal-dialog>
+
+            <button data-open="reveal-dialog" id="reveal-trigger">
+                Lauch Reveal Dialog
+                <svg viewBox="0 0 640 640" width="15px"><path d="M354.4 83.8C359.4 71.8 371.1 64 384 64L544 64C561.7 64 576 78.3 576 96L576 256C576 268.9 568.2 280.6 556.2 285.6C544.2 290.6 530.5 287.8 521.3 278.7L464 221.3L310.6 374.6C298.1 387.1 277.8 387.1 265.3 374.6C252.8 362.1 252.8 341.8 265.3 329.3L418.7 176L361.4 118.6C352.2 109.4 349.5 95.7 354.5 83.7zM64 240C64 195.8 99.8 160 144 160L224 160C241.7 160 256 174.3 256 192C256 209.7 241.7 224 224 224L144 224C135.2 224 128 231.2 128 240L128 496C128 504.8 135.2 512 144 512L400 512C408.8 512 416 504.8 416 496L416 416C416 398.3 430.3 384 448 384C465.7 384 480 398.3 480 416L480 496C480 540.2 444.2 576 400 576L144 576C99.8 576 64 540.2 64 496L64 240z"/></svg>
+            </button>
+
+            <dialog aria-modal="true" aria-labelledby="dialog-modal-header" id="reveal-dialog" class="fullish-width full-height animate-in-out">
+
+                <div class="dialog-page">
+
+                    <div class="dialog-container">
+
+                        <div class="dialog-body">
+
+                            <div class="dialog-header">
+
+                                <button aria-label="Close the dialog" class="close" popovertarget="reveal-dialog" popovertargetaction="hide">
+                                    &#10005;
+                                </button>
+
+                            </div>
+
+                            <div class="dialog-content">
+
+                                <div>
+
+                                    <h2 class="dialog-modal-header">User Experience</h2>
+
+                                    <p>
+                                       The first requirement for an exemplary user experience is to meet the exact needs of the customer, without fuss or bother. Next comes simplicity and elegance that produce products that are a joy to own, a joy to use. True user experience goes far beyond giving customers what they say they want, or providing checklist features. In order to achieve high-quality user experience in a company's offerings there must be a seamless merging of the services of multiple disciplines, including engineering, marketing, graphical and industrial design, and interface design.</p>
+
+<p>It's important to distinguish the total user experience from the user interface (UI), even though the UI is obviously an extremely important part of the design. As an example, consider a website with movie reviews. Even if the UI for finding a film is perfect, the UX will be poor for a user who wants information about a small independent release if the underlying database only contains movies from the major studios.</p>
+
+<p>We should also distinguish UX and usability: According to the definition of usability, it is a quality attribute of the UI, covering whether the system is easy to learn, efficient to use, pleasant, and so forth. Again, this is very important, and again total user experience is an even broader concept.
+                                    </p>
+
+                                    <h3>What Are Mental Models?</h3>
+<p>A mental model is what the user believes about the system (web, application, or other kind of product) at hand. Mental models help the user predict how a system will work and, therefore, influence how they interact with an interface.</p>
+
+<h3>A Mental Model Is Based on Belief, Not Facts</h3>
+<p>A mental model is a model of what users know (or think they know) about a system such as your website. Users form their predictions about the system based on their mental models and plan their future actions accordingly. A prime goal for designers is to ensure that the user interface clearly communicates the nature of the system so that users form accurate (and thus useful) mental models.</p>
+
+<h3>How do users create mental models?</h3>
+    <p>Often, they just use the knowledge they have about the world to create them. Remember Jakob's law of the internet user experience: Users spend most of their time on websites other than yours. Thus, a big part of customers' mental models of your site will be influenced by information gleaned from other sites. People expect websites to act alike.</p>
+
+<h3>Each User Has Their Own Mental Model</h3>
+<p>A mental model is based on each user’s individual background knowledge and past experiences, so different users might construct different mental models of the same system. One of the biggest dilemmas in usability is the gap between designers' and users' mental models. Designers form wonderfully detailed mental models of their own creations, leading them to believe that each feature is easy to understand. On the other hand, most users’ mental models of the system are usually less developed; as a result, they are more likely to make mistakes and find the design harder to use.</p>
+
+
+                                </div>
+
+                            </div>
+
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </dialog>
+
+        </reveal-dialog>
+
+    <script src="./reveal.js"></script>
+    </body>
+</html>

@@ -193,6 +193,12 @@ customElements.define( 'reveal-dialog', class FoundationishReveal extends HTMLEl
 
         $dialog.addEventListener("close", function (event) {});
 
+        return true
+    }
+
+
+    #backdrop () {
+
         /* ::backdrop JS (defer .close() until fade finishes) */
         (function () {
             const dlg = document.querySelector("dialog");
@@ -238,7 +244,6 @@ customElements.define( 'reveal-dialog', class FoundationishReveal extends HTMLEl
             });
         })();
 
-        return true
     }
 
 
