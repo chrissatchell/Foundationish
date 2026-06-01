@@ -240,64 +240,64 @@
 }
 
 @layer reveal.animation {
-
     :host,
     reveal-dialog {
-        --reveal-display-timing: 0.45s;
-        --reveal-backdrop-display-timing: 1.14s;
+        --reveal-display-timing: 2s;
+        --reveal-backdrop-display-timing: 0.15s;
 
         --reveal-backdrop-blur: 1px;
-        --reveal-backdrop-bg:  #333333e8;
+        --reveal-backdrop-bg: rgb(0 0 0 / 0);
     }
 
     dialog.animate-in-out {
-
-        /*****
-            Animate dialog
-        ******/
-
-        transform: translate(0, 5rem);
         opacity: 0;
-        transition: transform var(--reveal-display-timing),
-                    opacity var(--reveal-display-timing) 0.1s,
-                    display var(--reveal-display-timing, 0.25s) allow-discrete;
+        transform: translateY(1rem);
+        transition:
+            opacity var(--reveal-display-timing) ease,
+            transform var(--reveal-display-timing) ease,
+            overlay var(--reveal-display-timing) allow-discrete,
+            display var(--reveal-display-timing) allow-discrete;
+    }
 
-        &[open] {
-            opacity: 1;
-            transform: translate(0, 0);
+    dialog.animate-in-out::backdrop {
+        background: var(--reveal-backdrop-bg);
+        transition:
+            background-color var(--reveal-backdrop-display-timing) ease,
+            overlay var(--reveal-backdrop-display-timing) allow-discrete,
+            display var(--reveal-backdrop-display-timing) allow-discrete;
+    }
 
-            @starting-style {
-                & {
-                    opacity: 0;
-                    transform: translate(0, 5rem);
-                }
-            }
-        }
+    dialog.animate-in-out:open {
+        opacity: 1;
+        transform: translateY(0);
+    }
 
-        /*****
-            Animate dialog backdrop
-        *****/
+    dialog.animate-in-out:open::backdrop {
+        background: rgb(0 0 0 / 0.5);
+    }
 
-        &::backdrop {
-            background-color: var(--reveal-backdrop-bg);
+    /*
+        Keep closing rules after :open rules.
+        The dialog must remain open while it animates out, so this class needs
+        to win the cascade until JavaScript calls close().
+    */
+    dialog.animate-in-out:open.closing {
+        opacity: 0;
+        transform: translateY(1rem);
+    }
 
+    dialog.animate-in-out:open.closing::backdrop {
+        background: var(--reveal-backdrop-bg);
+    }
+
+    @starting-style {
+        dialog.animate-in-out:open {
             opacity: 0;
-            backdrop-filter: blur(var(--reveal-backdrop-blur));
-            will-change: opacity;
+            transform: translateY(1rem);
+        }
 
-            transition:
-                display var(--reveal-backdrop-display-timing, 0.25s) allow-discrete,
-                overlay var(--reveal-backdrop-display-timing, 0.25s) allow-discrete,
-                opacity var(--reveal-backdrop-display-timing, 0.25s),
-                backdrop-filter var(--reveal-backdrop-display-timing, 0.25s);
-        }
-        &[open]::backdrop {
-            opacity: 1;
-        }
-        @starting-style {
-            &[open]::backdrop {
-                opacity: 0;
-            }
+        dialog.animate-in-out:open::backdrop {
+            background: var(--reveal-backdrop-bg);
         }
     }
 }

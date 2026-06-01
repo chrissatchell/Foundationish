@@ -10,8 +10,6 @@ customElements.define( 'reveal-dialog', class FoundationishReveal extends HTMLEl
         template: "template"
     };
 
-    log = console.log;
-
     /**
      *  Attributes
      */
@@ -56,7 +54,7 @@ customElements.define( 'reveal-dialog', class FoundationishReveal extends HTMLEl
 
     ready() {
 
-        // DOM is not loading and is now READT, so initialize.
+        // DOM is not loading and is now ready, so initialize.
         if ( document.readyState !== 'loading' ) {
             this.init();
             return;
@@ -115,38 +113,41 @@ customElements.define( 'reveal-dialog', class FoundationishReveal extends HTMLEl
 
     render() {
 
-        let {log} = this;
-
         let $trigger = this.querySelector('[data-open]');
 
         let $dialog = $trigger
                         ? this.querySelector( '#' + $trigger.getAttribute( 'data-open' ) )
                         : false;
 
-        // log($dialog);
+        if ( ! $dialog ) return false;
 
         this.addEventListener( "click", ( event ) => {
 
-            event.preventDefault();
+            if ( ! (event.target instanceof Element) ) return;
 
             /**
-             * NOTE: Updates to use event.target instead of trigger
-             *       so the proper context is captured
-             *       and not applied to all button elements (and respective dislogs)
+             * Use closest() so clicks on nested SVG/path elements still resolve
+             * to the control that carries the dialog action attributes.
             */
+            const $control = event.target.closest('[data-open], [data-close-dialog], [popovertargetaction]');
 
+            if ( ! $control || ! this.contains($control) ) return;
+
+            event.preventDefault();
 
             let displayHandler = () => {
 
                 // Close button
-                if ( event.target.getAttribute("popovertargetaction") == "hide" ) {
+                if ( $control.getAttribute("popovertargetaction") === "hide" ) {
 
                     // Close the referenced dialog, or fall back to the nearest open dialog.
-                    const closingDialog = $dialog?.open ? $dialog : event.target.closest('dialog');
+                    const closingDialog = $dialog.open ? $dialog : $control.closest('dialog');
 
-                    if ( closingDialog?.open ) closingDialog.close();
-
-                    document.documentElement.classList.remove("has-open-modal");
+                    if ( closingDialog?.open ) {
+                        // Shift .close() to this.#closeDialog()
+                        // and inside the transitionend handler, so the exit animation can play before the dialog is removed from view.
+                        this.#closeDialog(closingDialog, '--reveal-display-timing');
+                    }
 
                     // IMPORTANT: don't fall through (continue on ...) to show logic
                     return;
@@ -155,10 +156,11 @@ customElements.define( 'reveal-dialog', class FoundationishReveal extends HTMLEl
 
                 // Open modal
                 if (
-                    ! $dialog.hasAttribute( 'open' )
-                    && ( event.target.getAttribute('data-open') === $dialog.id )
+                    ! $dialog.open
+                    && ( $control.getAttribute('data-open') === $dialog.id )
                 ) {
 
+                    $dialog.classList.remove("closing");
                     $dialog.showModal();
 
                     document.documentElement.classList.add("has-open-modal");
@@ -181,29 +183,35 @@ customElements.define( 'reveal-dialog', class FoundationishReveal extends HTMLEl
 
         });
 
-        $dialog.addEventListener("cancel", function (event) {
-            if ( document.documentElement.classList.contains("has-open-modal") ) {
-                document.documentElement.classList.remove("has-open-modal");
-            }
+        $dialog.addEventListener("cancel", (event) => {
+            event.preventDefault();
+            this.#closeDialog($dialog, '--reveal-display-timing');
         });
 
-        $dialog.addEventListener("close", function (event) {});
+        $dialog.addEventListener("close", (event) => {
+
+            $dialog.classList.remove("closing");
+            document.documentElement.classList.remove("has-open-modal");
+
+        });
 
         return true
     }
 
+    /*
+        BUG FIX
 
-    #backdrop ($dialog) {
+        Codex Fixed it.
+        The early transitionend was happening because the listener accepted the first transition event that reached the dialog. transitionend bubbles, and { once: true } meant an unrelated/early event could consume the listener before the dialog’s own 2s transition finished.
+        I changed Reveal/reveal.js (line 147) so closing now starts the transition before calling close(), filters transitionend to the dialog’s own opacity/transform, and prevents Escape from skipping the animation. I also added the missing closing state in Reveal/reveal.css (line 262).
+    */
 
-        /* ::backdrop JS (defer .close() until fade finishes) */
+    #closeDialog ($dialog, customProp = '--reveal-display-timing') {
 
-        // Find the dialog
-
-
-        // Read and normalize the CSS custom property used by the backdrop transition.
+        // Read and normalize the CSS custom property used by the dialog exit transition.
         const getTimingProp = (prop) => {
 
-            // Use the dialog's computed styles or get the document root.
+            // Custom properties inherit from <reveal-dialog> to the <dialog>.
             const timing = getComputedStyle($dialog ?? document.documentElement)
                 // Pull the raw CSS time value, such as "140ms" or "0.14s".
                 .getPropertyValue(`${prop}`)
@@ -223,65 +231,57 @@ customElements.define( 'reveal-dialog', class FoundationishReveal extends HTMLEl
             return match[2] === "s" ? duration * 1000 : duration;
         }
 
+        // Dialog fade-out duration in milliseconds.
+        const EXIT_MS = getTimingProp(customProp);
 
-        // Backdrop fade-out duration in milliseconds
-        const EXIT_MS = getTimingProp('--reveal-backdrop-display-timing');
+        if ( ! $dialog.open || $dialog.classList.contains("closing") ) return;
 
-        console.log(EXIT_MS);
+        $dialog.classList.add("closing");
 
-        const closeWithFade = ($dialog) => {
+        let doneCalled = false;
+        let fallbackTimer;
 
-            if ( !$dialog.open || $dialog.classList.contains("closing") ) return;
+        const finishClose = () => {
 
-            $dialog.classList.add("closing");
+            if ( doneCalled ) return;
 
-            // Prefer transitionend; fallback timeout just in case
-            let doneCalled = false;
+            doneCalled = true;
 
-            // now ::backdrop is removed, after fade
-            let done = () => {
-                $dialog.classList.remove("closing");
-                $dialog.close();
-            };
+            $dialog.removeEventListener("transitionend", onEnd);
+            clearTimeout(fallbackTimer);
 
-            let onEnd = (e) => {
+            // Calling close() removes the top-layer/backdrop only after the exit animation has finished.
+            $dialog.classList.remove("closing");
+            $dialog.close();
 
-                if ( doneCalled ) return;
+            console.log('Dialog transition ended by watching transitionend events on event.propertyName\'s [opacity, transform]');
+        };
 
-                // We can listen on the dialog (for its own opacity/transform) or just time out.
-                doneCalled = true;
+        const onEnd = (event) => {
+            // transitionend bubbles, so ignore animated descendants inside the dialog.
+            if ( event.target !== $dialog ) return;
 
-                $dialog.removeEventListener("transitionend", onEnd);
+            // The discrete display/overlay transitions are not reliable close signals.
 
-                done();
-            };
+            /*
+                event.propertyName is a property on a TransitionEvent (or AnimationEvent) that gives the name of the CSS property whose transition just completed.
 
-            $dialog.addEventListener("transitionend", onEnd, { once: true });
+                In your reveal.js code, inside the transitionend handler:
 
-            setTimeout(onEnd, EXIT_MS + 50);
-        }
+                  - event.propertyName is the CSS property that finished transitioning
+                  - the code checks whether it is 'opacity' or 'transform'
+                  - that ensures the close logic only runs for the dialog’s own relevant animation, not for unrelated child transitions
+            */
+            console.log('Transition ended for property:', event.propertyName, ['opacity', 'transform'].includes(event.propertyName));
+            if ( ! ['opacity', 'transform'].includes(event.propertyName) ) return;
 
-        /*
-        EXAMPLES
-        Intercept Esc-based closing */
+            finishClose();
+        };
 
-        /*
-        if ($dialog) {
+        $dialog.addEventListener("transitionend", onEnd);
 
-            $dialog.addEventListener("cancel", (e) => {
-                e.preventDefault(); // stop instant close
-                closeWithFade($dialog); // run our exit animation
-            });
-
-            $dialog.addEventListener("click", (e) => {
-                if (e.target.matches("[data-close-dialog]")) {
-                    e.preventDefault();
-                    if ($dialog) closeWithFade($dialog);
-                }
-            });
-
-        }
-        */
+        // Fallback covers reduced-motion, canceled transitions, and browsers with partial discrete support.
+        fallbackTimer = setTimeout(finishClose, EXIT_MS + 50);
 
     }
 
