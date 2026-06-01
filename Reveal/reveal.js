@@ -31,10 +31,8 @@ customElements.define( 'reveal-dialog', class FoundationishReveal extends HTMLEl
                 // [modal] added
                 if ( newValue === '' ) {
 
-
                 // [modal] removed
                 } else if ( newValue === null ) {
-
 
                 }
 
@@ -129,8 +127,6 @@ customElements.define( 'reveal-dialog', class FoundationishReveal extends HTMLEl
 
         this.addEventListener( "click", ( event ) => {
 
-            log(event.target);
-
             event.preventDefault();
 
             /**
@@ -197,52 +193,95 @@ customElements.define( 'reveal-dialog', class FoundationishReveal extends HTMLEl
     }
 
 
-    #backdrop () {
+    #backdrop ($dialog) {
 
         /* ::backdrop JS (defer .close() until fade finishes) */
-        (function () {
-            const dlg = document.querySelector("dialog");
-            const EXIT_MS = 500; // keep in sync with --backdrop-display-timing
 
-            function closeWithFade(d) {
-                if (!d.open || d.classList.contains("closing")) return;
-                d.classList.add("closing");
+        // Find the dialog
 
-                const done = () => {
-                    d.classList.remove("closing");
-                    d.close(); // now ::backdrop is removed, after fade
-                };
 
-                // Prefer transitionend; fallback timeout just in case
-                let doneCalled = false;
-                const onEnd = (e) => {
-                    if (doneCalled) return;
-                    // We can listen on the dialog (for its own opacity/transform) or just time out.
-                    doneCalled = true;
-                    d.removeEventListener("transitionend", onEnd);
-                    done();
-                };
+        // Read and normalize the CSS custom property used by the backdrop transition.
+        const getTimingProp = (prop) => {
 
-                d.addEventListener("transitionend", onEnd, { once: true });
-                setTimeout(onEnd, EXIT_MS + 50);
-            }
+            // Use the dialog's computed styles or get the document root.
+            const timing = getComputedStyle($dialog ?? document.documentElement)
+                // Pull the raw CSS time value, such as "140ms" or "0.14s".
+                .getPropertyValue(`${prop}`)
+                // Remove surrounding whitespace from the CSS custom property value.
+                .trim();
 
-            /* Intercept Esc-based closing */
-            if (dlg) {
-                dlg.addEventListener("cancel", (e) => {
-                    e.preventDefault(); // stop instant close
-                    closeWithFade(dlg); // run our exit animation
-                });
-            }
+            // Find a number and 'ms' or 's'
+            const match = timing.match(/^([\d.]+)(ms|s)$/);
 
-            /* Example: bind your close buttons */
-            document.addEventListener("click", (e) => {
+            // If not a match then fall back to 500ms
+            if (!match) return 500;
+
+            // Convert the numeric portion of the matched CSS time value into a JavaScript number
+            const duration = Number(match[1]);
+
+            // Convert seconds to milliseconds; leave millisecond values unchanged.
+            return match[2] === "s" ? duration * 1000 : duration;
+        }
+
+
+        // Backdrop fade-out duration in milliseconds
+        const EXIT_MS = getTimingProp('--reveal-backdrop-display-timing');
+
+        console.log(EXIT_MS);
+
+        const closeWithFade = ($dialog) => {
+
+            if ( !$dialog.open || $dialog.classList.contains("closing") ) return;
+
+            $dialog.classList.add("closing");
+
+            // Prefer transitionend; fallback timeout just in case
+            let doneCalled = false;
+
+            // now ::backdrop is removed, after fade
+            let done = () => {
+                $dialog.classList.remove("closing");
+                $dialog.close();
+            };
+
+            let onEnd = (e) => {
+
+                if ( doneCalled ) return;
+
+                // We can listen on the dialog (for its own opacity/transform) or just time out.
+                doneCalled = true;
+
+                $dialog.removeEventListener("transitionend", onEnd);
+
+                done();
+            };
+
+            $dialog.addEventListener("transitionend", onEnd, { once: true });
+
+            setTimeout(onEnd, EXIT_MS + 50);
+        }
+
+        /*
+        EXAMPLES
+        Intercept Esc-based closing */
+
+        /*
+        if ($dialog) {
+
+            $dialog.addEventListener("cancel", (e) => {
+                e.preventDefault(); // stop instant close
+                closeWithFade($dialog); // run our exit animation
+            });
+
+            $dialog.addEventListener("click", (e) => {
                 if (e.target.matches("[data-close-dialog]")) {
                     e.preventDefault();
-                    if (dlg) closeWithFade(dlg);
+                    if ($dialog) closeWithFade($dialog);
                 }
             });
-        })();
+
+        }
+        */
 
     }
 
@@ -334,5 +373,3 @@ customElements.define( 'reveal-dialog', class FoundationishReveal extends HTMLEl
     }
 
 } );
-
-

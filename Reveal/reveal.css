@@ -25,12 +25,6 @@
         --reveal-offset-y: 5rem;  /* 2.65rem */
         --reveal-scrollbar-gutter-width: 1rem;
 
-        --reveal-display-timing: 0.45s;
-        --reveal-backdrop-display-timing: 1s;
-
-        --reveal-backdrop-blur: 1px;
-        --reveal-backdrop-bg: transparent; /* #333333e8; */
-
         --color-primary: hsl(210 100% 80.6%); /* #9cceff */
         --color-softwhite: #f5f5ed;
         --color-grey: rgb(170, 170, 170);
@@ -247,22 +241,35 @@
 
 @layer reveal.animation {
 
+    :host,
+    reveal-dialog {
+        --reveal-display-timing: 0.45s;
+        --reveal-backdrop-display-timing: 1.14s;
+
+        --reveal-backdrop-blur: 1px;
+        --reveal-backdrop-bg:  #333333e8;
+    }
+
     dialog.animate-in-out {
 
         /*****
             Animate dialog
         ******/
 
+        transform: translate(0, 5rem);
         opacity: 0;
-        transition: opacity var(--reveal-display-timing),
+        transition: transform var(--reveal-display-timing),
+                    opacity var(--reveal-display-timing) 0.1s,
                     display var(--reveal-display-timing, 0.25s) allow-discrete;
 
         &[open] {
             opacity: 1;
+            transform: translate(0, 0);
 
             @starting-style {
                 & {
                     opacity: 0;
+                    transform: translate(0, 5rem);
                 }
             }
         }
@@ -275,14 +282,14 @@
             background-color: var(--reveal-backdrop-bg);
 
             opacity: 0;
-            /* backdrop-filter: blur(var(--reveal-backdrop-blur));
+            backdrop-filter: blur(var(--reveal-backdrop-blur));
             will-change: opacity;
 
             transition:
                 display var(--reveal-backdrop-display-timing, 0.25s) allow-discrete,
                 overlay var(--reveal-backdrop-display-timing, 0.25s) allow-discrete,
                 opacity var(--reveal-backdrop-display-timing, 0.25s),
-                backdrop-filter var(--reveal-backdrop-display-timing, 0.25s); */
+                backdrop-filter var(--reveal-backdrop-display-timing, 0.25s);
         }
         &[open]::backdrop {
             opacity: 1;
