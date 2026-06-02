@@ -242,21 +242,28 @@
 @layer reveal.animation {
     :host,
     reveal-dialog {
-        --reveal-display-timing: 2s;
-        --reveal-backdrop-display-timing: 0.15s;
+        --reveal-display-timing: 0.5s;
+        --reveal-backdrop-display-timing: 0.25s;
 
         --reveal-backdrop-blur: 1px;
         --reveal-backdrop-bg: rgb(0 0 0 / 0);
+
+        --reveal-offset-y: 2rem;
     }
 
     dialog.animate-in-out {
         opacity: 0;
-        transform: translateY(1rem);
+        transform: translateY(var(--reveal-offset-y));
         transition:
             opacity var(--reveal-display-timing) ease,
             transform var(--reveal-display-timing) ease,
             overlay var(--reveal-display-timing) allow-discrete,
             display var(--reveal-display-timing) allow-discrete;
+    }
+
+    /* Test: Slide up only on close */
+    dialog.animate-in-out.slide-up-on-close-only[class] {
+        transform: translateY(0);
     }
 
     dialog.animate-in-out::backdrop {
@@ -283,7 +290,7 @@
     */
     dialog.animate-in-out:open.closing {
         opacity: 0;
-        transform: translateY(1rem);
+        transform: translateY(var(--reveal-offset-y));
     }
 
     dialog.animate-in-out:open.closing::backdrop {
@@ -293,7 +300,7 @@
     @starting-style {
         dialog.animate-in-out:open {
             opacity: 0;
-            transform: translateY(1rem);
+            transform: translateY(var(--reveal-offset-y));
         }
 
         dialog.animate-in-out:open::backdrop {
