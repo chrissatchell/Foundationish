@@ -12,41 +12,36 @@
 
 			<nav aria-label="Site" class="site-navigation">
 
-                <ul class="[ site-navigation__nav ]">
-                    <!-- <li>
-                        <a href="/">Home</a>
-                    </li> -->
+                <ul class="site-navigation__nav">
 
-					<li class="[ menu-item menu-item-has-children ]" data-has-children>
+					<li class="menu-item menu-item-has-children">
 
-                        <dropdown-menu>
-                            <a href="/products/">dropdown class</a>
+                        <a href="/products/">dropdown class</a>
 
-                            <ul role="list" id="products-list" class="[ sub-menu ]">
-                                <li>
-                                    <a href="/class1/">Kitchen</a>
-                                </li>
+                        <ul role="list" id="products-list" class="[ sub-menu ]">
+                            <li>
+                                <a href="/class1/">Kitchen</a>
+                            </li>
 
-                                <li>
-                                    <a href="/class2/">Bathroom</a>
-                                </li>
+                            <li>
+                                <a href="/class2/">Bathroom</a>
+                            </li>
 
-                                <li class="[ menu-item menu-item-has-children ]" data-has-children>
-                                    <a href="/class3/">Personal Care</a>
+                            <li class="menu-item menu-item-has-children">
+                                <a href="/class3/">Personal Care</a>
 
-                                    <ul role="list">
-                                        <li><a href="/class4/">Hair care</a></li>
-                                        <li><a href="/class5/">Face care</a></li>
-                                    </ul>
-                                </li>
-                            </ul>
-                        </dropdown-menu>
+                                <ul role="list">
+                                    <li><a href="/class4/">Hair care</a></li>
+                                    <li><a href="/class5/">Face care</a></li>
+                                </ul>
+                            </li>
+                        </ul>
 
 					</li>
 
                     <li class="menu-item">
 
-                        <dropdown-menu>
+                        <dropdown-menu hoversupport>
                             <a href="/products/">dropdown component</a>
 
                             <ul class="sub-menu" data-note="Add role=list">
@@ -61,10 +56,10 @@
                                 <li class="menu-item">
                                     <a href="/personal-care/">Personal Care</a>
 
-                                    <ul>
+                                    <!-- <ul>
                                         <li><a href="#">Hair care</a></li>
                                         <li><a href="#">Face care</a></li>
-                                    </ul>
+                                    </ul> -->
                                 </li>
 
                             </ul>
@@ -72,7 +67,38 @@
 
 					</li>
 
-					<li>
+
+                     <li>
+
+                        <dropdown-menu hoversupport>
+
+                            <a href="/products/">dropdown component</a>
+
+                            <ul>
+                                <li>
+                                    <a href="/kitchen/">Kitchen</a>
+                                </li>
+
+                                <li>
+                                    <a href="/bathroom/">Bathroom</a>
+                                </li>
+
+                                <li>
+                                    <a href="/personal-care/">Personal Care</a>
+
+                                    <ul>
+                                        <li><a href="#">Hair care</a></li>
+                                        <li><a href="#">Face care</a></li>
+                                    </ul>
+                                </li>
+
+                            </ul>
+
+                        </dropdown-menu>
+
+					</li>
+
+					<!-- <li>
 						<a href="/">No dropdown js</a>
 
                         <ul class="sub-menu" data-note="Add role=list">
@@ -94,7 +120,7 @@
 							</li>
 
 						</ul>
-					</li>
+					</li> -->
 				</ul>
 			</nav>
 		</header>
@@ -102,6 +128,7 @@
 		<main>
 			<p>Usage:</p>
 			<br />
+            <a href="#">link</a>
 			<pre>
 			    let navDropdowns = new AccDropDownMenu({
 			        nav: '.site-navigation',
@@ -133,6 +160,25 @@
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
                 });
+            });
+        </script>
+         <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout( function() {
+                    const menuItem = document.querySelector('.menu-item-has-children');
+                    if (!menuItem) return;
+
+                    const dropdownMenu = document.createElement('dropdown-menu');
+                    dropdownMenu.id = 'js-added';
+
+                    while (menuItem.firstChild) {
+                        dropdownMenu.appendChild(menuItem.firstChild);
+                    }
+
+                    menuItem.appendChild(dropdownMenu);
+                    document.getElementById('js-added').setAttribute('hoversupport', '')
+                }, 5000)
+
             });
         </script>
     </body>
