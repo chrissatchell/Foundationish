@@ -331,12 +331,12 @@ class AccDropDownMenu {
     }
 }
 
-let navDropdowns = new AccDropDownMenu({
-    nav: '.site-navigation',
-    addHover: false,
-    hoverDisplayDelay: 250,
-    toggleButtonIcon: `<svg aria-hidden="true" width="1em" height="1em" fill="currentColor" viewBox="0 0 448 512"><path d="M201.4 342.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 274.7 86.6 137.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg>`,
-});
+// let navDropdowns = new AccDropDownMenu({
+//     nav: '.site-navigation',
+//     addHover: false,
+//     hoverDisplayDelay: 250,
+//     toggleButtonIcon: `<svg aria-hidden="true" width="1em" height="1em" fill="currentColor" viewBox="0 0 448 512"><path d="M201.4 342.6c12.5 12.5 32.8 12.5 45.3 0l160-160c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L224 274.7 86.6 137.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l160 160z"/></svg>`,
+// });
 
 // document.querySelector('.site-navigation').addEventListener('onExpandedDropdown', function (e) {
 //     let { target } = e;
@@ -356,48 +356,107 @@ let navDropdowns = new AccDropDownMenu({
 customElements.define(
 	'dropdown-menu',
 	class FoundationishDropdownMenu extends HTMLElement {
+
 		/**
 		 *  Fields
 		 */
 
+        #defaultHoverDisplayDelay = 175;
+
+        #defaultIcon = `
+            <svg width="1em" height="1em" viewBox="0 0 24 24" aria-hidden="true">
+                <path fill="currentColor" d="M5.293 9.707l6 6c0.391 0.391 1.024 0.391 1.414 0l6-6c0.391-0.391 0.391-1.024 0-1.414s-1.024-0.391-1.414 0l-5.293 5.293-5.293-5.293c-0.391-0.391-1.024-0.391-1.414 0s-0.391 1.024 0 1.414z"></path>
+            </svg>
+        `;
+
 		attr = {
 			ready: 'ready',
-			opened: 'expanded',
+			opened: 'opened',
 			template: 'template',
 		};
+
+        ids = {
+            nav: null,
+            anchor: null,
+            submenu: null
+        }
+
+        trigger = false;
+        panel = false;
+
+        icon = this.toggleButtonIcon ?? this.#defaultIcon;
+
+        nav = this.querySelector('header nav') ?? document.querySelector('header nav');
+        navID = false;
+
+        addHover = this.addHover ?? false;
+        hoverDisplayDelay = this.hoverDisplayDelay ?? this.#defaultHoverDisplayDelay;
+
+        onExpandedDropdownCallback = this.onExpandedDropdownCallback ?? false;
 
 		/**
 		 *  Attributes
 		 */
 
-		/* Watch for attribute changes */
+
 		static get observedAttributes() {
-			return ['foobar'];
+			return ['opened', 'nav'];
 		}
 
-		/* When attributes change then do something */
 		attributeChangedCallback(attrName, oldValue, newValue) {
+
 			switch (attrName) {
-				case 'foobar':
 
-                    // [foobar] added
-					if (newValue === '') {
-						// [foobar] removed
-					}
+                case 'opened':
 
-                    else if (newValue === null) {
+                    /* NOTE needed to reverse the order of the conditionals for the addition and removal */
 
+                    // [opened] removed
+                    if (newValue === null) {
+                        this.openedAttrHandler().setAria();
                     }
 
+                    // [opened] attr added without a value OR a value is set AND the new value is not the same as the old value
+					else if (
+                        newValue === ''
+                        || (
+                            newValue !== ''
+                            && newValue !== oldValue
+                        )
+                    ) {
+                        this.openedAttrHandler().setAria();
+                        console.log('opened new value');
+
+					}
+
 					break;
+
+                case 'nav':
+
+                    console.log(newValue);
+
+                    // [nav] removed
+                    if (newValue === null) {
+                        console.log('nav attribute removed');
+                        this.navAttrHander(false);
+                    }
+
+                    // [nav] added or changed
+                    else if (newValue === '' || (newValue !== '' && newValue !== oldValue)) {
+                        console.log('nav attribute smeghh');
+                        this.navAttrHander();
+                    }
+
 
 				default:
 					break;
+
 			}
 		}
 
-		/**
-		 *  1. When connected to the DOM, run the init() method when ready.
+
+        /**
+		 *  Connected
 		 */
 
 		connectedCallback() {
@@ -420,14 +479,6 @@ customElements.define(
             }, { once: true });
 		}
 
-		/**
-		 *  When initialized, do a great many things.
-		 *  1. Don't run if already initialized
-		 *  2. Get settings
-		 *  3. Render the markup
-		 *  4. iv. On "Ready" updates
-		 */
-
 		init() {
 			// Don't run if already initialized
 			if (this.hasAttribute(this.attr.ready)) return;
@@ -446,43 +497,179 @@ customElements.define(
 			this.setAttribute(this.attr.ready, '');
 		}
 
-		/**
-		 *  3. Setup
-		 */
-
 		setup() {
-			// Return something to detect inside init()
+
+            // this.navAttrHander().setID();
+
 			return true;
 		}
 
+
+
 		/**
-		 *  4. Render
+		 *  Render
 		 */
 
 		render() {
+            this.renderDropdownMenu();
 
+            this.renderToggleContainer();
 
-			return true;
+            this.delegateEvents();
+
+            return true;
 		}
+
+        renderDropdownMenu() {
+
+            // Get the dropdown sub-menu
+            const $dropdown = this.querySelector('ul');
+
+            // Bail if the dropdown element does not exist
+            if (!$dropdown) return false;
+
+            // ID to the dropdown sub-menu
+            let id = this.ids.submenu !== null ? this.ids.submenu : this.utils.generateID('fndish-submenu-');
+            $dropdown.setAttribute('id', id);
+            this.ids.submenu = $dropdown.id;
+
+            // And hide the dropdown sub-menu
+            $dropdown.setAttribute('hidden', '');
+
+            this.panel = $dropdown;
+        }
+
+        renderToggleContainer() {
+            let $toggleContainer = document.createElement('div');
+            $toggleContainer.classList.add('dropdown-toggle');
+
+            let {anchor,button} = this.renderToggleControls();
+
+            if ( this.querySelector(`#${this.ids.anchor}`) ) {
+                this.insertAdjacentElement('afterbegin', $toggleContainer);
+                $toggleContainer.insertAdjacentElement('afterbegin', anchor);
+                $toggleContainer.insertAdjacentElement('beforeend', button);
+            }
+
+        }
+
+        renderToggleControls( convertToButton = false ) {
+
+            // Get the top-level anchor. The dropdown menu toggle button will be placed adjacent to it in the DOM.
+            let $anchor = this.querySelector('a');
+
+            if ($anchor) {
+                // And then add an ID to the link
+                let id = this.ids.nav !== null ? this.ids.nav + '-anchor' : this.utils.generateID('fndish-anchor-');
+                $anchor.setAttribute('id', id);
+                this.ids.anchor = $anchor.getAttribute('id');
+            }
+
+            let $toggleButton = document.createElement('button');
+            $toggleButton.setAttribute('aria-expanded', 'false');
+            $toggleButton.setAttribute('aria-labelledby', this.ids.anchor);
+            $toggleButton.setAttribute('aria-controls', this.ids.submenu);
+            $toggleButton.innerHTML += this.icon;
+
+            this.trigger = $toggleButton;
+
+            return {
+                anchor: $anchor,
+                button: $toggleButton
+            };
+        }
+
 
 
 		/*
             Events
         */
 
-		delegateEvents() {
-			this.addEventListener('click', (event) => {
-				this.emitBeforeToggleEvent();
+        delegateEvents () {
 
-				console.log('clicked');
-			});
 
-			this.addEventListener('reveal:before-toggle', (event) => {
-				setTimeout(function () {
-					return true;
-				}, 10000);
-			});
-		}
+            // click, enter, spacebar
+            this.addEventListener( 'click', ( event ) => {
+
+                console.log(event.target.tagName.toLowerCase());
+
+                /* check for button element and that it exists inside the toggle container */
+                if (
+                    event.target.tagName.toLowerCase() === 'button'
+                    && event.target.closest('.dropdown-toggle')
+                ) {
+
+                    if ( this.hasAttribute( this.attr.opened ) ) this.removeAttribute( this.attr.opened );
+
+                    else this.setAttribute( this.attr.opened, '' );
+
+                }
+
+            });
+
+            // Listen for an Escape keydown event within the dropdown submenu
+            const $dropdown = this.querySelector(`#${this.ids.submenu}`);
+            $dropdown.addEventListener( 'keydown', ( event ) => {
+
+                // So that only the list itself closes, not its parent list
+                // (in the case of 3+ levels deep nested links)
+                event.stopImmediatePropagation();
+
+                if (event.keyCode === 27) {
+                    console.log('activeelement',this.activeElement);
+                }
+
+                // Escape key
+                if (
+                    event.keyCode === 27
+                    && this.utils.hasFocusWithin($dropdown)
+                ) {
+
+                    console.log('esc');
+
+                    if ( this.hasAttribute( this.attr.opened ) ) this.removeAttribute( this.attr.opened );
+
+                    else this.setAttribute( this.attr.opened, '' );
+
+                    this.trigger?.focus();
+                }
+                // Trigger is in focus when the esc key is pressed then close
+                else if (
+                    event.keyCode === 27
+                    && this.utils.hasFocusWithin(this.trigger)
+                ) {
+                    // If the trigger is focused and ESC is pressed, close the panel
+                    if ( this.hasAttribute( this.attr.opened ) ) this.removeAttribute( this.attr.opened );
+
+                    // Keep focus on the trigger for accessibility
+                    this.trigger?.focus();
+                }
+            }, false );
+
+
+             // Listen for Escape when the trigger (toggle button) itself has focus.
+            // Keydown on the trigger won't reach the submenu's keydown listener,
+            // so capture it at the component level and close the panel.
+            this.addEventListener('keydown', (event) => {
+
+                if ( event.key === 'Escape' || event.keyCode === 27 ) {
+
+                    // If the trigger is focused (or event.target is the trigger), close.
+                    if ( event.target === this.trigger || this.utils.hasFocusWithin(this.trigger) ) {
+
+                        if ( this.hasAttribute( this.attr.opened ) ) {
+                            this.removeAttribute(this.attr.opened);
+                        }
+
+                        // keep focus on trigger for accessibility
+                        this.trigger?.focus();
+
+                    }
+                }
+            });
+
+
+        }
 
 		emitReadyEvent() {
 			this.dispatchEvent(
@@ -509,13 +696,147 @@ customElements.define(
             Attributes
         */
 
-		/*
+        navAttrHander (setID = true) {
+
+            if (setID === false) {
+                this.nav.removeAttribute('id');
+            }
+
+            /* Setup navigation element ID */
+            if (this.getAttribute('nav')?.trim() !== '') {
+                this.nav = this.querySelector(this.getAttribute('nav')) ?? document.querySelector(this.getAttribute('nav'));
+            }
+            if (
+                ( setID && this.nav )
+                && !this.nav.hasAttribute('id')
+            ) {
+                this.nav.id = this.ids.nav !== null ? this.ids.nav : this.utils.generateID('fndish-dropdownmenu-');
+            }
+        }
+
+        openedAttrHandler () {
+
+            let root = this.shadowRoot ?? this;
+
+            let setAria = (
+                trigger = root.querySelector(".dropdown-toggle > button"),
+                panel = root.querySelector("ul")
+            ) => {
+                // let trigger = target;
+                // let panel = trigger.nextElementSibling;
+                if ( trigger === null || panel === null ) return;
+
+                if ( trigger.getAttribute("aria-expanded") === "true" ) {
+                    trigger.setAttribute("aria-expanded", "false");
+                    panel.setAttribute("hidden", "");
+
+                    /* TODO: track the trigger to reference it later. Use to add focus on the trigger after closing dropdown */
+
+                } else {
+                    trigger.setAttribute("aria-expanded", "true");
+                    panel.removeAttribute("hidden");
+                }
+            };
+
+            let closeAll = () => {
+
+
+            }
+
+            return { setAria };
+
+            // Close the dropdown.
+
+            // if ( $disclose_trigger_button.getAttribute('aria-expanded') === 'true' ) {
+            //     $disclose_trigger_button.setAttribute('aria-expanded', 'false');
+
+            //     $dropdown_submenu.setAttribute('hidden', '');
+
+            //     $disclose_trigger_button.dispatchEvent(onCollapsedDropdownEvent);
+
+            //     return true;
+            // }
+
+            // // Open the dropdown.
+            // else {
+            //     $disclose_trigger_button.setAttribute('aria-expanded', 'true');
+
+            //     $dropdown_submenu.removeAttribute('hidden');
+
+            //     $disclose_trigger_button.dispatchEvent(onExpandedDropdownEvent);
+
+            //     if (onExpandedDropdownCallback !== false) {
+            //         onExpandedDropdownCallback($disclose_trigger_button, $dropdown_submenu);
+            //     }
+
+            //     return false;
+            // }
+
+        }
+
+        /*
             Detection
         */
 
-		/* Detect Template */
+        detectChildAnchor() {
+            return this.querySelector(':scope > a');
+        }
+
+        detectChildButton() {
+            return this.querySelector(':scope > button');
+        }
+
+        detectChildSubMenu(selector = ':scope > ul') {
+            return this.querySelector();
+        }
+
+        // detect immediate sibling for submenu, which is the ideal structure for the dropdown component.
+        detectSiblingSubMenu() {
+            return this.nextElementSibling;
+        }
+
+        /* Detect Template */
 		detectHTMLTemplate() {
 			return this.querySelector('template');
 		}
+
+
+
+        /**
+         * Utilities
+         * @return  {Object}  Utility methods
+         *
+         * generateID
+         * @param  {String}  prefix  Add a custom string to the start of the ID.
+         * @return {String}
+         *
+         * hasFocusWithin
+         * @param  {HTMLElement}  element  Check if there is focus is within a chosen element.
+         * @return {Boolean}
+         *
+         * getCSSCustomProperty
+         * @param  {String}  propertyName  The name of the CSS custom property to retreive.
+         * @return {String}  propertyValue  The value of the property.
+         */
+
+        get utils() {
+            return {
+                generateID(prefix = '') {
+                    return prefix + Math.floor(Math.random() * 999);
+                },
+
+                hasFocusWithin(element) {
+                    return element.contains(document.activeElement);
+                },
+
+                getCSSCustomProperty(propertyName) {
+                    // Get the value of the specified CSS custom property
+                    let propertyValue = getComputedStyle(document.documentElement).getPropertyValue(`--${propertyName}`) ?? false;
+
+                    // Return the property value
+                    return propertyValue;
+                },
+            };
+        }
 	}
 );
