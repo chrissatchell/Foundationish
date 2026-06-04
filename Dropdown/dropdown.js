@@ -293,7 +293,7 @@ customElements.define(
 
             });
 
-            // Listen for an Escape keydown event within the dropdown submenu
+            // ESC Key: Listen for event within the dropdown submenu
             $submenu.addEventListener( 'keydown', ( event ) => {
 
                 // So that only the list itself closes, not its parent list
@@ -316,9 +316,8 @@ customElements.define(
             }, false );
 
 
-             // Listen for Escape when the trigger (toggle button) itself has focus.
-            // Keydown on the trigger won't reach the submenu's keydown listener,
-            // so capture it at the component level and close the panel.
+             // ESC Key: Listen for event when the trigger (toggle button) itself has focus.
+            //           Listen at the component level, not inside the submenu panel (bc the trigger is outside).
             this.addEventListener('keydown', (event) => {
 
                 if ( event.key === 'Escape' || event.keyCode === 27 ) {
@@ -335,6 +334,8 @@ customElements.define(
 
                     }
                 }
+
+                /* TODO: if opened with hover, allow the ESC key to close */
             });
 
             if ( ! this.constructor.windowListenersRegistered ) {
