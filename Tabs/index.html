@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Tabs - Foundation(ish) Accessible Components</title>
+        <link rel="stylesheet" href="./accordion.css" />
+	</head>
+	<body class="superbody">
+
+        <h1><code>&lt;tabbed-panels&gt;</code></h1>
+
+        <tabbed-panels></tabbed-panels>
+        <tab-panels></tab-panels>
+        <fndish-tabs></fndish-tabs>
+        <ish-tabs></ish-tabs>
+
+        <accordion-items role="region" aria-label="Frequently Asked Questions" single-select>
+
+            <accordion-item class="right-icon animate animate-in-out">
+                <button>1. Lorem ipsum dolor sit (Animated In Out).</button>
+                <div>
+                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                </div>
+            </accordion-item>
+
+            <accordion-item class="right-icon animate animate-in-out">
+                <button>1a. Lorem ipsum dolor sit (Animated In Out).</button>
+                <div>
+                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                </div>
+            </accordion-item>
+
+            <accordion-item class="right-icon animate animate-in-out">
+                <button>1b. Lorem ipsum dolor sit (Animated In Out).</button>
+                <div>
+                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                </div>
+            </accordion-item>
+
+        </accordion-items>
+
+        <accordion-items role="region" aria-label="More Frequently Asked Questions">
+
+            <accordion-item class="left-icon animate-in-out">
+                <details>
+                    <summary>4. Lorem ipsum dolor sit (Animate In Out).</summary>
+                    <div>
+                        <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                    </div>
+                </details>
+            </accordion-item>
+
+            <accordion-item class="left-icon animate-in-out" >
+                <details name="f00bartus">
+                    <summary>5. Lorem ipsum dolor sit.</summary>
+                    <div>
+                        <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                    </div>
+                </details>
+            </accordion-item>
+
+            <accordion-item class="left-icon animate-in-out">
+                <details>
+                    <summary>6. Lorem ipsum dolor sit.</summary>
+                    <div>
+                        <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                    </div>
+                </details>
+            </accordion-item>
+
+        </accordion-items>
+
+        <accordion-items role="region" aria-label="Shadow DOM Template">
+
+            <accordion-item template class="right-icon use-parts"></accordion-item>
+
+            <accordion-item template class="right-icon use-slots">
+                <button class="trigger" slot="trigger">Slotted Trigger</button>
+                <div hidden slot="panel">
+                    <p><strong>Slotted Panel</strong></p>
+                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quo praesentium neque quos impedit deleniti sed possimus sit reiciendis repellat. Itaque ipsam perferendis esse incidunt suscipit tenetur quia in sunt laborum.</p>
+                </div>
+            </accordion-item>
+
+            <accordion-item class="right-icon use-parts animate-in-out" shadowstyles="./accordion.css">
+
+                <template shadowrootmode="open">
+
+                    <div class="disclosure" role="group">
+
+                        <button class="trigger">Declative Shadow Root</button>
+
+                        <div class="panel">
+                            <p>
+                                <code>
+                                    shadowrootmode="open"
+                                </code>
+                            </p>
+                            <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quo praesentium neque quos impedit deleniti sed possimus sit reiciendis repellat. Itaque ipsam perferendis esse incidunt suscipit tenetur quia in sunt laborum.</p>
+                        </div>
+
+                    </div>
+
+                </template>
+
+            </accordion-item>
+
+            <accordion-item class="right-icon animate-in-out" template="something-templated">
+                <button>TODO: template="something-templated"</button>
+                <div>
+                    <p>Lorem ipsum dolor sit, amet consectetur adipisicing elit. Dignissimos, qui repudiandae non facilis cum quidem beatae atque nam quae quam eaque itaque sit amet aperiam officia delectus magni ipsa. Rerum!</p>
+                </div>
+            </accordion-item>
+
+            <template id="something-templated">
+
+                <!-- <style>
+                    :host {
+                        border-radius: var(--fndish-disclosure-radius, 4px);
+                    }
+
+                    /*
+                        Select light DOM content that has been slotted
+                        into the shadow DOM.
+                    */
+
+                    .disclosure {
+                        border: var(--fndish-disclosure-border, 2px solid #ffc8c8);
+                        border-radius: var(--fndish-disclosure-radius, 4px);
+                        overflow: clip;
+                        background-color: light-dark(black, white);
+                    }
+
+                    accordion-item[expanded] {
+                        --fndish-disclosure-radius: 1px;
+                    }
+
+                    button.trigger {
+                        padding: var(--fndish-disclosure-padding, 0.5rem);
+                        padding-inline-start: 14px;
+
+                        cursor: pointer;
+                        appearance: none;
+                        background: none;
+                        border:none;
+                        position: relative;
+                        color: light-dark(white, black);
+                        font-weight: bold;
+
+                        display: flex;
+                        flex-flow: row wrap;
+                        align-items: center;
+                        justify-content: space-between;
+                        padding-inline-start: calc(14px/16px*1rem);
+                        width: 100%;
+
+                        &::after {
+                            content: "";
+                            border-right: 2px solid black;
+                            border-bottom: 2px solid black;
+                            margin-right: 7.2px;
+                            /* margin-left: auto; */
+                            transform: translate(-1px, -0.5px) rotate(-45deg);
+
+                            position: relative;
+                            display: inline-block;
+                            width: 7px;
+                            height: 7px;
+                            transition: 0.075s transform ease-out;
+                            pointer-events: none;
+                        }
+                    }
+
+                    button[aria-expanded="true"]::after {
+                        transform: translate(-1px, -0.5px) rotate(var(--expanded-icon-rotation, 45deg));
+                    }
+
+                    .disclosure:has([aria-expanded="true"]) button {
+                        color: light-dark(white, black);
+                    }
+
+                    div.panel {
+                        padding: var(--fndish-disclosure-padding);
+                        padding-block-start: 0;
+                        padding-block-end: 1.05rem;
+                        padding-inline-start: 1rem;
+                        color: black;
+                        border-top: 1px solid #000;
+
+                        & p {
+                            margin-block-end: 0;
+                        }
+                    }
+
+                    p {
+                        color: black;
+                    }
+
+                    :where(summary + div),
+                    summary::details-content {
+                        padding: var(--fndish-disclosure-padding);
+                        padding-block-start: 0;
+                    }
+
+
+                </style> -->
+
+                <div class="disclosure" role="group" part="disclosure">
+
+                    <button class="trigger" part="trigger">Template</button>
+
+                    <div class="panel" part="panel">
+                        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Quo praesentium neque quos impedit deleniti sed possimus sit reiciendis repellat. Itaque ipsam perferendis esse incidunt suscipit tenetur quia in sunt laborum.</p>
+                    </div>
+
+                </div>
+
+            </template>
+
+        </accordion-items>
+
+    <script src="./accordion.js"></script>
+    </body>
+</html>

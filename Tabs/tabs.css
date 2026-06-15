@@ -1,0 +1,563 @@
+/**
+ * Foundation(ish) Accordion styles.
+ */
+
+/* Layers */
+@layer accordion;
+@layer
+    accordion.reset,
+    accordion.tokens,
+    accordion.core,
+    accordion.theme,
+    accordion.state,
+    accordion.utilities,
+    accordion.demo;
+
+/* Reset */
+@import "./styles/reset.css" layer(accordion.reset);
+
+
+/* Core */
+@layer accordion.core {
+
+    :host,
+    accordion-item {
+        font-size: 16px; /* Alternative 16px × 0.625 = 10px → 1rem = 10px */
+        line-height: var(--reset-body-line-height, 1.5);
+
+        &:focus-within {
+            /* box-shadow: 0 0 0 3px blue; */
+        }
+
+
+        /*
+            Trigger
+        */
+
+        button {
+            cursor: pointer;
+            appearance: none;
+            background: none;
+            /* border:none; */
+            display: flex;
+            flex-flow: row wrap;
+            width: 100%;
+            position: relative;
+
+            text-align: left;
+        }
+
+        &::part(trigger) {
+            cursor: pointer;
+            appearance: none;
+            border:none;
+            background: none;
+
+            display: flex;
+            flex-flow: row wrap;
+            width: 100%;
+            position: relative;
+
+            text-align: left;
+        }
+
+
+        button[aria-expanded] + div[id] {
+            padding: var(--fndish-disclosure-padding);
+        }
+
+
+        /*
+            Panel
+        */
+
+        details summary + :where(*),
+        details summary::details-content {
+            padding: var(--fndish-disclosure-padding);
+        }
+
+        /* Shadow DOM */
+        &::part(panel) {
+            padding: var(--fndish-disclosure-padding);
+        }
+
+    }
+
+}
+
+@layer accordion.theme {
+
+    :host,
+    accordion-item {
+         --color-active: #b7b923;
+        border-radius: var(--fndish-disclosure-radius);
+
+        &[expanded] {
+            box-shadow: 0 0 0 1.5px var(--color-active);
+        }
+
+        /*
+            Discloser container
+        */
+
+        details,
+        .disclosure {
+            --color-active: #b7b923;
+            border: var(--fndish-disclosure-border, 1px solid white);
+            border-radius: var(--fndish-disclosure-radius, calc(14/16*1rem));
+            box-shadow: 0 0 0.1px var(--color-active);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+        /* NOTE:  ::parts need to be attached to the host */
+        &::part(disclosure) {
+            --color-active: #b7b923;
+            border: var(--fndish-disclosure-border, 1px solid white);
+            border-radius: var(--fndish-disclosure-radius, calc(14/16*1rem));
+            box-shadow: 0 0 0.1px var(--color-active);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+
+
+        /*
+            Trigger
+        */
+
+        summary,
+        button[aria-expanded] {
+            cursor: pointer;
+
+            color: var(--accordion-open-summary-color, white);
+            font-weight: bold;
+            text-align: left;
+
+            padding: var(--fndish-disclosure-padding, 0.5rem);
+            padding-inline-start: 14px;
+
+            display: flex;
+            flex-flow: row wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        &::part(trigger) {
+            cursor: pointer;
+
+            color: var(--accordion-open-summary-color, white);
+            font-weight: bold;
+            text-align: left;
+
+            /* Copied from reset.css.
+            ::part() styles are weird; They do not inherit if set on the :host */
+            font-size: 1em;
+            line-height: 1.5;
+
+            padding: var(--fndish-disclosure-padding, 0.5rem);
+            padding-inline-start: 14px;
+
+            display: flex;
+            flex-flow: row wrap;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        details[open] summary,
+        button[aria-expanded="true"] {
+            color: light-dark(black, white);
+            font-weight: bold;
+        }
+
+
+        /*
+            Panel
+        */
+
+        button[aria-expanded] + div[id] {
+            padding: var(--fndish-disclosure-padding);
+            padding-block-start: 0;
+            padding-block-end: 1.05rem;
+            padding-inline-start: 1rem
+        }
+
+        details summary + :where(*),
+        details summary::details-content {
+            padding: var(--fndish-disclosure-padding);
+            padding-block-start: 0;
+            padding-block-end: 1.05rem;
+            padding-inline-start: 1rem
+        }
+
+        /* Shadow DOM */
+        &::part(panel) {
+            padding: var(--fndish-disclosure-padding);
+            padding-block-start: 0;
+            padding-block-end: 1.05rem;
+            padding-inline-start: 1rem;
+
+            /* Nested styles inside a ::part to not work */
+            p {
+                margin-block: 0;
+            }
+        }
+
+
+        /*
+            Arrow Icon
+        */
+
+        &.right-icon :is(button, summary),
+        &.left-icon :is(button, summary) {
+            --expanded-icon-rotation: 45deg;
+
+            & {
+                list-style: none;
+
+                &::marker {
+                    content: none;
+                }
+
+                &::-webkit-details-marker {
+                    display: none;
+                }
+            }
+
+
+             &::after {
+                content: "";
+                border-right: 0.15em solid currentColor;
+                border-bottom: 0.15em solid currentColor;
+                margin-right: 0.45rem;
+                /* margin-left: auto; */
+                transform: translate(-1px, -0.5px) rotate(-45deg);
+
+                position: relative;
+                display: inline-block;
+                width: 0.5em;
+                height: 0.5em;
+                transition: 0.075s transform ease-out;
+                pointer-events: none;
+            }
+
+            &[aria-expanded="true"]::before {
+                transform: translate(-1px, -1.5px) rotate(var(--expanded-icon-rotation, 45deg));
+            }
+
+            &[aria-expanded="true"]::after {
+                transform: translate(-1px, -0.5px) rotate(var(--expanded-icon-rotation, 45deg));
+            }
+        }
+        &.left-icon :is(button, summary) {
+            justify-content: flex-start;
+
+            &::after { display: none; }
+
+            &::before {
+                content: "";
+                border-right: 0.15em solid currentColor;
+                border-bottom: 0.15em solid currentColor;
+                margin-right: 0.45rem;
+                /* margin-left: auto; */
+                transform: translate(-1px, -0.5px) rotate(-45deg);
+
+                position: relative;
+                display: inline-block;
+                width: 0.5em;
+                height: 0.5em;
+                transition: 0.075s transform ease-out;
+                pointer-events: none;
+            }
+        }
+        &.left-icon[class] details[open] summary::before {
+            transform: translate(-1px, -50%) rotate(45deg);
+        }
+        &.right-icon[class] details[open] summary::after {
+            transform: translate(-1px, -0.5px) rotate(var(--expanded-icon-rotation, 45deg));
+        }
+
+
+        /*
+            Slide transition for expanded and collapsed states
+        */
+
+        &.animate-in-out {
+            --animate-delay: 0s;
+            --animate-speed: 250ms;
+            --animate-speed-delta: 50ms;
+
+            interpolate-size: allow-keywords;
+            overflow-y: hidden;
+
+            &:focus-visible {
+                overflow-y: visible;
+            }
+
+            /*
+                Disclosure using Custom Markup
+            */
+
+            /* Keep the closed panel transitionable even when the component adds [hidden]. */
+            & .disclosure {
+                /* NOTE: Check why overflow hidden is fix where overflow clip is not. */
+                /* overflow: hidden; */
+            }
+
+            & .disclosure > button + div {
+                overflow: clip;
+                block-size: 0;
+                opacity: 0;
+                display: none;
+
+                /* Fix jank on collapse */
+                padding-bottom: 0;
+
+                transition:
+                    block-size var(--animate-speed, 250ms) var(--animate-delay) ease,
+                    opacity calc( var(--animate-speed) - var(--animate-speed-delta) ) var(--animate-delay) ease,
+                    display var(--animate-speed) var(--animate-delay) ease allow-discrete,
+                    content-visibility var(--animate-speed) var(--animate-delay) ease allow-discrete;
+
+                @media (prefers-reduced-motion: reduce) {
+                    transition: none;
+                }
+
+                & *:last-child {
+                    padding-bottom: 1.05rem;
+                }
+            }
+
+            &[expanded] .disclosure > button + div {
+                block-size: auto;
+                opacity: 1;
+                display: block;
+
+                /* Start newly opened panels from the collapsed state before animating to auto. */
+                @starting-style {
+                    & {
+                        block-size: 0;
+                        opacity: 0;
+                    }
+                }
+            }
+
+            /*
+                Disclosure using Details
+            */
+
+            details::details-content {
+                block-size: 0;
+                overflow: clip;
+                opacity: 0;
+
+                transition:
+                    block-size 250ms ease,
+                    opacity 200ms ease,
+                    content-visibility 250ms ease allow-discrete;
+            }
+
+            details[open]::details-content {
+                block-size: auto;
+                opacity: 1;
+            }
+
+            @starting-style {
+                details[open]::details-content {
+                    block-size: 0;
+                    opacity: 0;
+                }
+            }
+
+            @media (prefers-reduced-motion: reduce) {
+                details::details-content {
+                    transition: none;
+                }
+            }
+        }
+
+        &.animate-in {
+            --animate-delay: 0s;
+            --animate-speed: 250ms;
+            --animate-speed-delta: 50ms;
+
+            interpolate-size: allow-keywords;
+
+            /* Keep the closed panel transitionable even when the component adds [hidden]. */
+            & .disclosure > button + div {
+                overflow: clip;
+                block-size: 0;
+                opacity: 0;
+                /* display: none; */
+
+                transition:
+                    block-size var(--animate-speed, 250ms) var(--animate-delay) ease,
+                    opacity calc( var(--animate-speed) - var(--animate-speed-delta) ) var(--animate-delay) ease,
+                    /* display var(--animate-speed) var(--animate-delay) ease allow-discrete, */
+                    content-visibility var(--animate-speed) var(--animate-delay) ease allow-discrete;
+
+                @media (prefers-reduced-motion: reduce) {
+                    transition: none;
+                }
+            }
+
+            &[expanded] .disclosure > button + div {
+                block-size: auto;
+                opacity: 1;
+                /* display: block; */
+
+                /* Start newly opened panels from the collapsed state before animating to auto. */
+                @starting-style {
+                    & {
+                        block-size: 0;
+                        opacity: 0;
+                    }
+                }
+            }
+
+        }
+
+    }
+
+    /* No work */
+    :host.right-icon {}
+
+    /* overrided by @layer accordion.demo :where(body).
+    The layer can override strong selectors when the layer contains a weak selector. */
+    body.superbody[class] {
+        background-color: #1f4016;
+    }
+}
+
+
+@layer accordion.tokens {
+    :root {
+        --fndish-disclosure-padding: 0.5rem;
+        --fndish-disclosure-border: 1px solid #214f71;
+        --accordion-open-summary-color: white;
+        --fndish-disclosure-radius: 0.5rem;
+    }
+}
+
+
+@layer accordion.demo {
+    :where(body) {
+        padding: 2rem;
+        font-family: sans-serif;
+        background-color: #193549;
+    }
+
+    h1 {
+        margin-bottom: 2rem;
+    }
+
+    :host,
+    accordion-item {
+        display: block;
+        margin-bottom: 1rem;
+        width: min(100%, 50rem);
+        background-color: #333;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    accordion-items {
+        display: inline-block;
+        width: min(100%, 50rem);
+        padding: 1rem;
+        background-color: #0000005e;
+        margin-bottom: 1rem;
+        border-radius: 1rem;
+        overflow:clip;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    :host,
+    accordion-item.use-parts[class] {
+        /* background-color: transparent; */
+        /* --fndish-disclosure-border: 2px solid #0a0a0a; */
+
+        /* OVERRIDES using ::part() */
+
+        /* &::part(disclosure) {
+            border-radius: 10px;
+            overflow: clip;
+        } */
+
+        /*
+            Select shadow DOM content
+            from the light DOM.
+        */
+        /* &::part(trigger) {
+            background-color: #fff;
+            outline: none;
+            border:none;
+            color: #121212;
+            font-size: 1.2rem;
+        }
+
+        &::part(panel) {
+            font-size: 1rem;
+            background-color: black;
+            overflow: hidden;
+        } */
+    }
+
+    :host,
+    accordion-item.use-slots[class] {
+        /* --fndish-disclosure-border: 2px solid #0a0a0a; */
+        /* --fndish-disclosure-radius: 20px; */
+
+        /* &[expanded] {
+            --fndish-disclosure-radius: 1rem;
+        }
+
+        /* Slotted elements are sill part of the Light DOM */
+
+        /*& .trigger {
+            background-color: white;
+            color: black;
+
+            &[aria-expanded="true"] {
+                margin-bottom: 1rem;
+            }
+
+            &::after {
+                border-color: black;
+            }
+        }
+
+        & .trigger + div {
+
+        }
+
+        & .trigger + div {
+            opacity: 0;
+            transition: opacity 1s;
+
+            @starting-style {
+                opacity: 0.8;
+            }
+        }
+
+        &[expanded] .trigger + div {
+            opacity: 0.8;
+        }
+
+        div[slot="panel"] {
+            box-shadow: inset 0 0 0 2px red;
+            display: block;
+
+            & p {
+                font-style: italic;
+            }
+        } */
+        /* No work */
+        slot[name="panel"]::slotted(section) {
+            background: rgb(233, 181, 230);
+            padding: 1rem !important;
+        }
+    }
+}
