@@ -461,11 +461,11 @@
     }
 
     accordion-items {
-        display: inline-block;
-        width: min(100%, 50rem);
+        display: block;
+        width: min(100%, 30rem);
         padding: 1rem;
         background-color: #0000005e;
-        margin-bottom: 1rem;
+        margin-bottom: 1.5rem;
         border-radius: 1rem;
         overflow:clip;
 
