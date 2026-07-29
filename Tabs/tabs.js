@@ -1,226 +1,20 @@
-customElements.define( 'accordion-item', class FoundationishAccordion extends HTMLElement {
+customElements.define( 'tabbed-panels', class FoundationishTabs extends HTMLElement {
 
     /**
      *  Fields
      */
 
+    start = null;
 
-    expanded = false;
+    isManual = false;
 
-    panelID = false;
-
-    // Internal flag used to distinguish event-driven attribute updates from external changes
-    triggeredExternally = true;
-
-    // Cache for details name attribute support (runs once across all instances)
-    static detailsNameSupport = null;
-
-    // Cached detect parent accordion-items element for single-select attribute
-    static singleSelectSupport = null;
+    list = null;
 
     attr = {
         ready: "ready",
-        opened: "expanded",
-        template: "template"
+        start: "start",
+        manual: "manual"
     };
-
-    #defaultTemplateStyles = `
-        <style>@import url('./accordion.css');</style>
-    `;
-
-    #defaultTemplate = `
-        ${this.#defaultTemplateStyles}
-
-        <div class="disclosure" role="group" part="disclosure">
-            <slot name="trigger">
-                <button class="trigger" part="trigger">
-                    <slot name="trigger-label">Default Label</slot>
-                </button>
-            </slot>
-            <slot name="panel">
-                <div class="panel" part="panel">
-                    <slot name="panel-content">
-                        <p>Default panel content.</p>
-
-                        <p>Styled using ::part()</p>
-                    </slot>
-                </div>
-            </slot>
-        </div>
-    `;
-
-
-    /**
-     *  Attributes
-     */
-
-    /* Watch for attribute changes */
-    static get observedAttributes () {
-        return ['ready', 'expanded', 'template'];
-    }
-
-    /* When attributes change then do something */
-    attributeChangedCallback ( attrName, oldValue, newValue ) {
-
-        /* Custom HTML is provided */
-        if ( this.detectCustomHTML() && !this.hasTemplateAttr() ) {
-
-            switch ( attrName ) {
-
-                case 'expanded':
-
-                    // ADDED
-                    if ( newValue === '' ) {
-
-                        // Update aria for trigger and panel
-                        this.expandedAttrHandler().setAria();
-
-                        /* Except for the target, close all disclosures */
-                        if ( this.hasSingleSelectAttribute() ) {
-                            this.expandedAttrHandler().closeAll();
-                        }
-
-                    // REMOVED
-                    } else if ( newValue === null ) {
-
-                        // Update aria for trigger and panel
-                        this.expandedAttrHandler().setAria();
-
-                    }
-
-                    break;
-
-                default:
-                    break;
-            }
-
-        }
-
-         /* Details element is provided */
-        if ( this.detectHTMLDetails() && !this.hasTemplateAttr() ) {
-
-            switch ( attrName ) {
-
-                case 'expanded':
-
-                    // ADDED
-                    if ( newValue === '' ) {
-
-                        // let openAttr = this.querySelector('details').hasAttribute('open');
-                        // if ( ! openAttr ) this.querySelector('details').setAttribute('open', '');
-
-                         /* Except for the target, close all disclosures */
-                        if ( this.hasSingleSelectAttribute() ) {
-                            this.expandedAttrHandler().closeAll();
-                        }
-
-                        if ( this.triggeredExternally === true ) {
-                            this.querySelector('details').setAttribute('open','');
-                        }
-
-                        this.triggeredExternally = true;
-
-                    // REMOVED
-                    } else if ( newValue === null ) {
-
-                        // console.log(`REMOVED, this.triggeredExternally: ${this.triggeredExternally}`);
-
-                        if ( this.triggeredExternally === true ) {
-                            this.querySelector('details').removeAttribute('open');
-                        }
-
-                        this.triggeredExternally = true;
-
-                    }
-
-                    break;
-
-                default:
-                    break;
-            }
-
-        }
-
-        /* [template] */
-        if ( this.hasTemplateAttr() ) {
-
-            switch ( attrName ) {
-
-                case 'expanded':
-
-                    let trigger = this.shadowRoot.querySelector('slot[name="trigger"]')
-                        ? this.shadowRoot.querySelector('slot[name="trigger"]').assignedElements({ flatten: true })[0]
-                        : this.shadowRoot.querySelector('.trigger') ?? this.shadowRoot.querySelector('button[aria-expanded]');
-
-                    let panel = this.shadowRoot.querySelector('slot[name="panel"]')
-                        ? this.shadowRoot.querySelector('slot[name="panel"]').assignedElements({ flatten: true })[0]
-                        : this.shadowRoot.querySelector('.panel') ?? this.shadowRoot.querySelector('button ~ [id]');
-
-                    // ADDED
-                    if ( newValue === '' ) {
-
-                        // Update aria for trigger and panel
-                        this.expandedAttrHandler().setAria(trigger,panel);
-
-                        /* Except for the target, close all disclosures */
-                        if ( this.hasSingleSelectAttribute() ) {
-                            this.expandedAttrHandler().closeAll();
-                        }
-
-                    // REMOVED
-                    } else if ( newValue === null ) {
-
-                        // Update aria for trigger and panel
-                        this.expandedAttrHandler().setAria(trigger,panel);
-
-                    }
-
-                    break;
-
-                default:
-                    break;
-            }
-
-        }
-
-        /* Declarative Shadow Root */
-        else if ( !!this.shadowRoot ) {
-
-            switch ( attrName ) {
-
-                case 'expanded':
-
-                    let trigger = this.shadowRoot.querySelector('.trigger') ?? this.shadowRoot.querySelector('button[aria-expanded]');
-
-                    let panel = this.shadowRoot.querySelector('.panel') ?? this.shadowRoot.querySelector('button ~ [id]');
-
-                    // ADDED
-                    if ( newValue === '' ) {
-
-                        // Update aria for trigger and panel
-                        this.expandedAttrHandler().setAria(trigger,panel);
-
-                        /* Except for the target, close all disclosures */
-                        if ( this.hasSingleSelectAttribute() ) {
-                            this.expandedAttrHandler().closeAll();
-                        }
-
-                    // REMOVED
-                    } else if ( newValue === null ) {
-
-                        // Update aria for trigger and panel
-                        this.expandedAttrHandler().setAria(trigger,panel);
-
-                    }
-
-                    break;
-
-                default:
-                    break;
-            }
-
-        }
-    }
 
 
     /**
@@ -237,42 +31,41 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
      */
 
     connectedCallback() {
+        // Reconnect event listeners when an initialized component returns to the DOM.
+        if ( this.hasAttribute( this.attr.ready ) ) {
+            this.delegateEvents();
+            return;
+        }
+
         this.ready();
     }
 
+    disconnectedCallback() {
+        this.list?.removeEventListener( 'click', this );
+        document.removeEventListener( 'keydown', this );
+    }
+
     ready() {
-         /*
-            document.readyState values:
-            'loading'	    Document is still loading, DOM is not yet ready
-            'interactive'	DOM is ready, but stylesheets/images may still be loading
-            'complete'	    Everything is loaded (like window.onload)
-
-            If your connectedCallback() fires after the DOM is already loaded (which often happens with dynamically created elements or async script loading), there's no point waiting for DOMContentLoaded—it's never going to fire again. So the function:
-
-            1. Checks first: Is the DOM already ready? → Call init() immediately
-            2. If not: Wait for DOMContentLoaded event → Then call init()
-
-            This prevents your component from hanging if the DOM is already in the 'interactive' or 'complete' state.
-        */
-
         // DOM is ready NOW, so init immediately
         if ( document.readyState !== 'loading' ) {
             this.init();
             return;
         }
 
-        // Otherwise wait until the DOM is ready; Safe to query/manipulate DOM elements now. Unlike window.onload, this does not wait for stylesheets, images and fonts to load.
-        document.addEventListener('DOMContentLoaded', () => {
+        // Otherwise wait until the DOM is ready.
+        document.addEventListener( 'DOMContentLoaded', () => {
             this.init();
-        }, { once: true });
+        }, { once: true } );
     }
+
 
     /**
      *  When initialized, do a great many things.
      *  1. Don't run if already initialized
      *  2. Get settings
      *  3. Render the markup
-     *  4. iv. On "Ready" updates
+     *  4. Add event listeners
+     *  5. On "Ready" updates
      */
 
     init() {
@@ -287,424 +80,248 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
         // Run render() and if it returns false, stop initialization.
         if ( ! this.render() ) {
+            console.warn( 'FoundationishTabs: No tabs were found.', this );
             return;
         }
 
-        // Set the "is-ready" attribute to indicate that the component is ready to use
-        this.setAttribute( this.attr.ready, "");
+        // Listen for events
+        this.delegateEvents();
+
+        // Ready to go! Emit a custom event: "tabs:ready"
+        this.emitReadyEvent();
+
+        // Set the "ready" attribute to indicate that the component is ready to use
+        this.setAttribute( this.attr.ready, "" );
     }
 
 
     /**
-     *  3. Setup
+     *  2. Setup
      */
 
     setup() {
-        // Ready to go! emit a custom event: "accordionitem:is-ready"
-        this.emitReadyEvent();
 
-        //this.setComponentOpenedAttribute();
+        // Get settings
+        this.start = this.getAttribute( this.attr.start );
+        this.isManual = this.hasAttribute( this.attr.manual );
+
+        // Get the tab list
+        this.list = this.querySelector( '.tabs' );
 
         // Return something to detect inside init()
-        return true;
+        return !!this.list;
     }
 
 
     /**
-     *  4. Render
+     *  3. Render
      */
 
     render() {
-        let { log } = console;
 
-        // Detect provided custom markup for a disclosure pattern
-        // using a button and a div
-        if ( this.detectCustomHTML() && !this.hasTemplateAttr() ) {
-            this.setAttribute('type','custom');
-            this.#renderCustomHTMLDisclosure().setWrapperForDisclosure();
-            this.#renderCustomHTMLDisclosure().setAttsForDisclosure();
+        // Get the list items and links
+        const listItems = this.list?.querySelectorAll( 'li' ) || [];
+        const links = this.list?.querySelectorAll( 'a' );
+
+        // Make sure there's a list and links
+        if ( !this.list || !links?.length ) return false;
+
+        // Add ARIA to the list
+        this.list.setAttribute( 'role', 'tablist' );
+
+        // Add ARIA to the list items
+        for ( const item of listItems ) {
+            item.setAttribute( 'role', 'presentation' );
         }
 
-        // Detect 'details' element
-        if ( this.detectHTMLDetails() && !this.hasTemplateAttr() ) {
-            this.setAttribute('type','details');
-            this.supportsDetailsName();
-            this.#renderHTMLDetailsDisclosure();
-        }
+        // Add ARIA to the links and tab panels
+        links.forEach( ( link, index ) => {
 
-        /*
-            A. Has a delcarative shadow root.
-        */
-        if ( this.shadowRoot && !this.hasTemplateAttr() ) {
+            // Get the target tab panel
+            const panel = this.querySelector( link.hash );
 
-            this.setAttribute('type','delcarative-shadowroot-template');
+            // If there's no matching panel, remove the link and skip this one
+            if ( !panel ) {
+                ( link.closest( 'li' ) || link ).remove();
 
-            let trigger = this.shadowRoot.querySelector('.trigger') ?? this.shadowRoot.querySelector('button[aria-expanded]');
+                console.warn(
+                    `FoundationishTabs: A tab panel for "${link.textContent.trim()}" with the ID "${link.hash}" could not be found. The corresponding tab was removed.`,
+                    this
+                );
 
-            let panel = this.shadowRoot.querySelector('.panel') ?? this.shadowRoot.querySelector('button ~ [id]');
-
-            this.#renderCustomHTMLDisclosure().setAttsForDisclosure( trigger, panel );
-        }
-
-
-        // Has [template]
-        // NOTE: Detect [slot] of any children then halt this.detectCustomHTML() ?
-        if ( this.hasTemplateAttr() ) {
-
-            this.setAttribute('type','custom-template');
-
-            // const hasProvidedChildTemplate = this.querySelector('template');
-            // const hasProvidedCustomTemplate = this.getAttribute('template')?.trim() ?? false;
-            const hasDeclarativeShadowRoot = !!this.shadowRoot;
-
-            const hasChildElements = this.children.length > 0;
-
-            const hasTemplateAttr = this.hasAttribute('template');
-
-            const hasTemplateWithID = hasTemplateAttr && this.getAttribute('template').trim() !== '';
-
-            const setShadowDOM = ( shadowmode = "open" ) => {
-                return this.shadowRoot ?? this.attachShadow({
-                    mode: shadowmode
-                });
-            };
-
-
-            /*
-                b. Use a custom template if there is a [template] attribute with a value that matches the ID of a template.
-            */
-             if ( hasTemplateWithID ) {
-                const templateID = this.getAttribute('template').trim();
-                const template = document.getElementById(templateID);
-
-                if ( template ) {
-                    setShadowDOM();
-                    const fragment = template.content.cloneNode(true);
-                    this.shadowRoot.appendChild(fragment);
-                    this.#renderCustomHTMLDisclosure().setAttsForDisclosure();
-                } else {
-                    log(`No template found with ID "${templateID}". Falling back to default template.`);
-                    setShadowDOM();
-                    const defaultTemplate = document.createElement("template");
-                    defaultTemplate.innerHTML = this.#defaultTemplate;
-                    const fragment = defaultTemplate.content.cloneNode(true);
-                    this.shadowRoot.appendChild(fragment);
-                    this.#renderCustomHTMLDisclosure().setAttsForDisclosure();
-                }
+                return;
             }
 
-            /*
-                c. Use the default template if there is a [template] attribute.
-            */
-            else {
+            // Determine if this is the active tab
+            const isActive = this.start ? this.start === link.hash : index === 0;
 
-                this.setAttribute('type','default-template');
+            // Create the tab button
+            const button = document.createElement( 'button' );
+            button.innerHTML = link.innerHTML;
+            button.id = link.id || `tab_${panel.id}`;
 
-                setShadowDOM();
+            // Prevent the button from submitting forms
+            button.setAttribute( 'type', 'button' );
 
-                const template = document.createElement("template");
+            // Add ARIA to the button
+            button.setAttribute( 'role', 'tab' );
+            button.setAttribute( 'aria-controls', link.hash.slice( 1 ) );
+            button.setAttribute( 'aria-selected', isActive ? 'true' : 'false' );
 
-                template.innerHTML = this.#defaultTemplate;
-
-                /**
-                 * Use a DocumentFragment instead of assigning directly with innerHTML.
-                 *
-                 * The template's .content is a DocumentFragment, which lets the browser
-                 * parse the markup once, build the DOM nodes off-document, and then append
-                 * them into the shadow root in a single operation. This is generally cleaner
-                 * and more performant than repeatedly touching the live DOM.
-                 */
-                const fragment = template.content.cloneNode(true);
-
-                this.shadowRoot.appendChild(fragment);
-
-                this.#renderCustomHTMLDisclosure().setAttsForDisclosure();
+            // If it is not the active tab, prevent focus
+            if ( !isActive ) {
+                button.setAttribute( 'tabindex', '-1' );
             }
 
-        }
+            // Replace the link with the button
+            link.replaceWith( button );
 
+            // Add ARIA to the tab panel
+            panel.setAttribute( 'role', 'tabpanel' );
+            panel.setAttribute( 'aria-labelledby', button.id );
 
-        /* NOTE: Hardcoded styles. Consider making these configurable using CSS variables or a custom render event. */
+            // If it is not the active panel, hide it
+            if ( !isActive ) {
+                panel.setAttribute( 'hidden', '' );
+            } else {
+                panel.removeAttribute( 'hidden' );
+            }
+        } );
 
-        // Add styles
-        //this.shadowRoot.appendChild( document.createRange().createContextualFragment( this.#defaultTemplateStyles ) );
-
-        let shadowStylesAttr = this.getAttribute('shadowstyles')?.trim();
-
-        // if ( shadowStylesAttr == 'pretty' ) {
-
-        //     let prettyStyles = `
-        //         <style>@import url('./accordion.css');</style>
-        //         <style>@import url('./import-styles.css');</style>
-        //     `;
-
-        //     this.renderShadowStyles({ customStyles: prettyStyles });
-
-        // }
-
-        if (
-            shadowStylesAttr !== null
-            && (
-                typeof shadowStylesAttr === 'string'
-                && /\.css(\?|#|$)/i.test(shadowStylesAttr)
-            )
-        ) {
-
-            this.renderShadowStyles({ stylesURL: shadowStylesAttr });
-
-        } else if ( shadowStylesAttr === '' || shadowStylesAttr === 'default' ) {
-
-            this.renderShadowStyles({ defaultStyles: true });
-
-        }
-
-        // Event listeners for details toggle and custom disclosure click
-        // this.onToggleEvent();
-        this.delegateEvents();
-
-        // Return something to detect inside init()
         return true;
     }
 
-    #renderCustomHTMLDisclosure () {
-
-        // Generate a unique ID for the panel if it doesn't already have one
-        let _generateUniqueID = () => {
-            //return "disclosure-panel-" + Math.random().toString(36).substr(2, 9);
-            let id = Math.floor(Math.random() * 100000);
-
-            // Make sure it's not already in use
-            let suffix = 0;
-            let existing = document.querySelector(`#fndish-panel-${id}`);
-            while (existing) {
-                suffix++;
-                existing = document.querySelector(
-                    `#fndish-panel-${id}_${suffix}`,
-                );
-            }
-
-            // Set the ID on the element
-            return `fndish-panel-${id}${suffix ? `_${suffix}` : ""}`;
-        }
-
-        // wrap the existing child HTML in a custom disclosure pattern using a button and a div
-        let setWrapperForDisclosure = () => {
-            let wrapper = document.createElement("div");
-            wrapper.classList.add("disclosure");
-            wrapper.setAttribute("role", "group");
-
-            while (this.firstChild) {
-                wrapper.appendChild(this.firstChild);
-            }
-
-            this.appendChild(wrapper);
-        };
-
-        // Set the necessary ARIA attributes on the button and panel for accessibility
-        let setAttsForDisclosure = ( button, content ) => {
-            const root = this.shadowRoot ?? this;
-
-            let trigger = button || root.querySelector(".disclosure > button"),
-                panel = content || root.querySelector(".disclosure > div");
-
-            // console.log(trigger,panel);
-
-            if (trigger === null) {
-                let triggerSlot = root.querySelector('slot[name="trigger"]');
-                trigger = triggerSlot.assignedElements({ flatten: true })[0];
-            }
-
-            if (panel === null) {
-                let panelSlot = root.querySelector('slot[name="panel"]');
-                panel = panelSlot.assignedElements({ flatten: true })[0];
-                // console.log(panel);
-            }
-
-
-            if (!panel.id) {
-                root.panelID = _generateUniqueID();
-                panel.id = root.panelID;
-            }
-
-            if (
-                !trigger.hasAttribute("aria-controls")
-                || trigger.getAttribute("aria-controls") !== `#${panel.id}`
-            ) {
-                trigger.setAttribute("aria-controls", panel.id);
-            }
-
-            if ( !trigger.hasAttribute("aria-expanded") ) {
-                trigger.setAttribute("aria-expanded", "false");
-            }
-
-            if (trigger.getAttribute("aria-expanded") === "false") {
-                panel.setAttribute("hidden", "");
-            } else {
-                panel.removeAttribute("hidden");
-            }
-
-            if ( this.hasAttribute( this.attr.opened ) ) {
-                trigger.setAttribute("aria-expanded", "true");
-                panel.removeAttribute("hidden");
-            }
-        }
-
-        return {
-            setWrapperForDisclosure,
-            setAttsForDisclosure
-        }
-
-        //setWrapperForDisclosure();
-
-        //setAttsForDisclosure();
-
-        // addWiringForDisclosure();
-    }
-
-    #renderHTMLDetailsDisclosure () {
-
-        if ( this.querySelector('details').hasAttribute('open') ) {
-            this.setAttribute('expanded', '');
-        }
-
-        if ( this.hasAttribute('expanded') ) {
-            this.querySelector('details').setAttribute('open', '');
-        }
-
-
-        /*
-            Add the name attr and the same value for each to enable expansion of one disclosre at a time
-
-            NOTE:
-                If the browser supports the name attribute on details elements, we can rely on
-                native grouping behavior. We just need to ensure that all details elements within
-                the same accordion-items parent have the same name value.
-        */
-
-        if ( this.hasSingleSelectAttribute() ) {
-
-            if ( this.supportsDetailsName() ) {
-
-                const detailsElements = Array.from(
-                    this.closest('accordion-items')?.querySelectorAll('accordion-item details')
-                );
-
-                if ( detailsElements && detailsElements.length > 0 ) {
-
-                    let id = `fndish-details-${Math.random().toString(36).substr(2, 9)}`;
-
-                    for ( const detail of detailsElements ) {
-
-                        // Skip element if there is no name attr or the value is empty.
-                        if (
-                            ! detail.hasAttribute( 'name' )
-                            || detail.getAttribute( 'name' ).trim() === ''
-                        ) continue;
-
-                        // Use the value of the first element with a name attr.
-                        id = detail.getAttribute('name');
-                        break;
-
-                    }
-
-                    detailsElements.forEach( detail => {
-                        detail.setAttribute( 'name', id );
-                    });
-                }
-
-            }
-
-            // TODO: No support for [name] then close all other details elements when one is opened, to mimic the single-select behavior.
-            else {
-
-            }
-        }
-    }
-
-    renderShadowStyles (
-        {
-            defaultStyles = false,
-            customStyles = false,
-            stylesURL = false,
-        } = {}
-    ) {
-
-        if ( !this.shadowRoot ) return;
-
-        if ( customStyles ) {
-
-            this.shadowRoot.prepend( document.createRange().createContextualFragment( customStyles ) );
-
-        } else if ( stylesURL ) {
-
-            let styles = `<style>@import url(${stylesURL});</style>`;
-            this.shadowRoot.appendChild( document.createRange().createContextualFragment( styles ) );
-
-        } else if ( defaultStyles ) {
-
-            let defaultStyles = this.#defaultTemplateStyles;
-            this.shadowRoot.prepend( document.createRange().createContextualFragment( defaultStyles ) );
-
-        }
-    }
 
     /*
         Events
     */
 
+    delegateEvents() {
+        this.list.addEventListener( 'click', this );
+        document.addEventListener( 'keydown', this );
+    }
+
+    /**
+     * Handle events.
+     * @param {Event} event The event object
+     */
+    handleEvent( event ) {
+
+        switch ( event.type ) {
+            case 'click':
+                this.onClick( event );
+                break;
+
+            case 'keydown':
+                this.onKeydown( event );
+                break;
+
+            default:
+                break;
+        }
+    }
+
+    /**
+     * Handle click events.
+     * @param {Event} event The event object
+     */
+    onClick( event ) {
+
+        // Only run on tab buttons
+        const button = event.target instanceof Element
+            ? event.target.closest( '[role="tab"]' )
+            : null;
+
+        if ( !button || !this.list.contains( button ) ) return;
+
+        // Ignore the currently active tab
+        if ( button.matches( '[aria-selected="true"]' ) ) return;
+
+        // Toggle tab visibility
+        this.select( button );
+    }
+
+    /**
+     * Handle keydown events.
+     * @param {Event} event The event object
+     */
+    onKeydown( event ) {
+
+        // Only run on keyboard events
+        if ( !( event instanceof KeyboardEvent ) ) return;
+
+        // Store next and previous keys
+        const keyNext = [ 'ArrowRight' ];
+        const keyPrevious = [ 'ArrowLeft' ];
+
+        // Only run for the supported arrow keys
+        if ( ![ ...keyNext, ...keyPrevious ].includes( event.key ) ) return;
+
+        // Only run if the focused element is a tab inside the component
+        const currentTab = this.list?.querySelector( '[role="tab"]:focus' );
+        if ( !currentTab ) return;
+
+        // Prevent page scroll
+        event.preventDefault();
+
+        // Get the parent list item
+        const listItem = currentTab.closest( 'li' );
+
+        // If next arrow, get the next sibling. Otherwise get the previous.
+        const nextListItem = keyNext.includes( event.key )
+            ? listItem?.nextElementSibling
+            : listItem?.previousElementSibling;
+
+        const nextTab = nextListItem?.querySelector( '[role="tab"]' );
+        if ( !nextTab ) return;
+
+        // Shift focus
+        nextTab.focus();
+
+        // If not in manual mode, toggle tab visibility
+        if ( this.isManual ) return;
+
+        this.select( nextTab );
+    }
+
     emitReadyEvent() {
         this.dispatchEvent(
-            new CustomEvent('accordionitem:is-ready', {
+            new CustomEvent( 'tabs:ready', {
                 bubbles: true,
                 cancelable: false,
-                detail: { expanded: this.expanded }
+                composed: true
             } )
         );
     }
 
-    emitBeforeToggleEvent() {
-        this.dispatchEvent( new CustomEvent( 'accordion:before-toggle', {
-            bubbles: true,
-            composed: true, // event can cross shadow DOM boundaries
-            detail: {
-                element: event.target,
-                expanded: this.hasAttribute( this.attr.opened ),
-                triggeredExternally: this.triggeredExternally
-            }
-        } ) );
+    emitBeforeSelectEvent( currentTab, currentPanel, nextTab, nextPanel ) {
+        return this.dispatchEvent(
+            new CustomEvent( 'tabs:select-before', {
+                bubbles: true,
+                cancelable: true,
+                composed: true,
+                detail: {
+                    currentTab,
+                    currentPane: currentPanel,
+                    nextTab,
+                    nextPane: nextPanel
+                }
+            } )
+        );
     }
 
-    delegateEvents() {
-
-        /* On Click: Update WC attr to run attributeChangedCallback */
-        this.addEventListener( 'click', ( event ) => {
-
-            this.triggeredExternally = false;
-
-            this.emitBeforeToggleEvent();
-
-            if ( this.hasAttribute( this.attr.opened ) ) this.removeAttribute( this.attr.opened );
-
-            else this.setAttribute( this.attr.opened, '' );
-
-        } );
-
-        /* On Toggle: Update WC attr to run attributeChangedCallback */
-        // this.addEventListener("toggle", (event) => {
-
-        //     console.log('toggle');
-
-        //     if ( this.hasAttribute( this.attr.opened ) ) this.removeAttribute( this.attr.opened );
-
-        //     else this.setAttribute( this.attr.opened, '' );
-
-        // } );
-
-        this.addEventListener( 'accordion:before-toggle', event => {
-            setTimeout(function () {
-                return true;
-            }, 10000);
-        });
+    emitSelectEvent( tab, panel ) {
+        this.dispatchEvent(
+            new CustomEvent( 'tabs:select', {
+                bubbles: true,
+                cancelable: false,
+                composed: true,
+                detail: {
+                    tab,
+                    pane: panel
+                }
+            } )
+        );
     }
 
 
@@ -712,151 +329,49 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
         Handlers
     */
 
-    expandedAttrHandler() {
-
-        let root = this.shadowRoot ?? this;
-
-        let setAria = (
-            trigger = root.querySelector(".disclosure > button"),
-            panel = root.querySelector(".disclosure > button")?.nextElementSibling
-        ) => {
-            // let trigger = target;
-            // let panel = trigger.nextElementSibling;
-            if ( trigger === null || panel === null ) return;
-
-            if ( trigger.getAttribute("aria-expanded") === "true" ) {
-                trigger.setAttribute("aria-expanded", "false");
-                panel.setAttribute("hidden", "");
-
-            } else {
-                trigger.setAttribute("aria-expanded", "true");
-                panel.removeAttribute("hidden");
-            }
-        };
-
-        let closeAll = () => {
-
-            let accordionItems = this.closest("accordion-items")?.querySelectorAll("accordion-item");
-
-            if ( ! accordionItems ) return;
-
-            [...accordionItems].forEach( item => {
-
-                // Except for the target, close all disclosures
-                if ( item !== this ) item.removeAttribute(this.attr.opened);
-
-            } );
-        }
-
-        return {
-            setAria,
-            closeAll
-        };
-
-    }
-
-
-
-    /*
-        State
-    */
-
-    getStateFromAttr( attrName ) {
-        return this.getAttribute( attrName ) ? true : false;
-    }
-
-
-
-
-
-    /*
-        Attributes
-    */
-
-    hasTemplateAttr () {
-        return this.hasAttribute('template');
-    }
-
-
-    /*
-        Detection
-    */
-
-    /* Detect Template */
-    detectHTMLTemplate () {
-        return this.querySelector('template');
-    }
-
-    /* Detect details element */
-    detectHTMLDetails() {
-        let $details = this.querySelector("details");
-        if ( $details ) {
-            return !!$details;
-        }
-    }
-
-    detectCustomHTML() {
-        let trigger = this.querySelector("button"),
-            panel = this.querySelector("button + div");
-        if ( trigger && panel ) {
-            return {
-                trigger,
-                panel
-            };
-        }
-        return false;
-    }
-
-    hasSingleSelectAttribute() {
-        return this.closest("accordion-items")?.hasAttribute("single-select") ?? false;
-    }
-
     /**
-     * Detect if browser supports the name attribute on details elements
-     * The name attribute allows multiple details elements to be grouped (only one open at a time)
-     * Result is cached to run detection only once across all instances
-     * @returns {boolean} True if the browser supports the name attribute on details elements
+     * Select a tab and show its panel.
+     * @param {Element} tab The tab to select
      */
+    select( tab ) {
 
-    supportsDetailsName() {
-        let {log} = console;
+        // If there is no tab, stop
+        if ( !tab ) return;
 
-        // Run once and cache the result in a static property on the class
-        // Return cached result if already tested
-        if (this.constructor.detailsNameSupport !== null) {
-            // log(`name support for details elements (cached): ${this.constructor.detailsNameSupport}`);
-            return this.constructor.detailsNameSupport;
+        // Get the target tab panel
+        const panelID = tab.getAttribute( 'aria-controls' );
+        const panel = panelID ? this.querySelector( `#${CSS.escape( panelID )}` ) : null;
+        if ( !panel ) return;
+
+        // Get the current tab and panel
+        const currentTab = tab
+            .closest( '[role="tablist"]' )
+            ?.querySelector( '[aria-selected="true"]' );
+
+        const currentPanelID = currentTab?.getAttribute( 'aria-controls' );
+        const currentPanel = currentPanelID
+            ? this.querySelector( `#${CSS.escape( currentPanelID )}` )
+            : null;
+
+        // Emit tabs:select-before. If cancelled, do not select the tab.
+        if ( !this.emitBeforeSelectEvent( currentTab, currentPanel, tab, panel ) ) {
+            return;
         }
 
-        // Test actual grouping behavior for same-named details elements.
-        // As of May 1, 2026, this feature is missing in older browsers including
-        // IE, Chrome/Edge before 120, Firefox before 130, and Safari/iOS Safari before 17.2.
-        const container = document.createElement('div');
-        const one = document.createElement('details');
-        const two = document.createElement('details');
-        const groupName = 'foundationish-details-test';
+        // Update the selected tab
+        tab.setAttribute( 'aria-selected', 'true' );
+        currentTab?.setAttribute( 'aria-selected', 'false' );
 
-        container.hidden = true;
-        one.setAttribute('name', groupName);
-        two.setAttribute('name', groupName);
-        one.innerHTML = '<summary>One</summary><p>One</p>';
-        two.innerHTML = '<summary>Two</summary><p>Two</p>';
+        // Update the visible tab panel
+        panel.removeAttribute( 'hidden' );
+        currentPanel?.setAttribute( 'hidden', '' );
 
-        container.append(one, two);
-        document.body.appendChild(container);
+        // Make sure the selected tab can be focused and other tabs cannot
+        tab.removeAttribute( 'tabindex' );
+        currentTab?.setAttribute( 'tabindex', '-1' );
 
-        one.open = true;
-        two.open = true;
-
-        // If grouping is supported, opening one same-named details element closes the other,
-        // so support means they should not both remain open at the same time.
-        this.constructor.detailsNameSupport = !(one.open && two.open);
-        container.remove();
-
-        // log(`name support for details elements: ${this.constructor.detailsNameSupport}`);
-        return this.constructor.detailsNameSupport;
+        // Emit tabs:select
+        this.emitSelectEvent( tab, panel );
     }
 
 } );
-
-
