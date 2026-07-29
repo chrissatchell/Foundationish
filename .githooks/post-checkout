@@ -1,0 +1,27 @@
+#!/bin/sh
+# Sets sparse-checkout to match the checked-out branch name against a
+# top-level directory (case-insensitive). Falls back to the full tree
+# when no directory matches (e.g. main).
+#
+# Enable with: git config core.hooksPath .githooks
+
+# $3 is 1 for a branch checkout, 0 for a plain file checkout
+if [ "$3" != "1" ]; then
+  exit 0
+fi
+
+branch=$(git symbolic-ref --short HEAD 2>/dev/null)
+[ -z "$branch" ] && exit 0
+
+match=$(git ls-tree -d --name-only HEAD | grep -ix "$branch")
+
+if [ -n "$match" ]; then
+  git sparse-checkout init --cone >/dev/null 2>&1
+  git sparse-checkout set "$match" >/dev/null 2>&1
+  echo "post-checkout: sparse-checkout limited to '$match' (matched branch '$branch')"
+else
+  if [ -f .git/info/sparse-checkout ]; then
+    git sparse-checkout disable >/dev/null 2>&1
+    echo "post-checkout: no directory matches branch '$branch' — showing full tree"
+  fi
+fi
