@@ -1,0 +1,2 @@
+- [Project test setup](project-test-setup.md) — Playwright config, file:// navigation, CommonJS, Chromium-only, `npm test`
+- [tabbed-panels component](tabbed-panels-component.md) — ARIA contract, button ID pattern, reliable locators, section names for scoping
