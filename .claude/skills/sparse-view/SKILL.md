@@ -25,9 +25,13 @@ re-sync the view without switching branches.
 3. If a match is found:
    ```bash
    git sparse-checkout init --cone
-   git sparse-checkout set ".githooks" "<matched-dir>"
+   dotdirs=$(git ls-tree -d --name-only HEAD | grep '^\.')
+   git sparse-checkout set $dotdirs "<matched-dir>"
    ```
-   `.githooks` must always stay in the cone alongside the matched directory —
+   All top-level dot-directories (`.githooks`, `.claude`, `.vscode`, etc.) must
+   stay in the cone alongside the matched directory — cone mode only
+   auto-includes top-level *files*, not directories, so any dot-directory left
+   out vanishes from disk. `.githooks` in particular must never be excluded:
    narrowing it away deletes `post-checkout` from disk, and git silently skips
    missing hooks, so no later checkout could ever undo the narrowing again.
    Report which directory is now the only one visible.

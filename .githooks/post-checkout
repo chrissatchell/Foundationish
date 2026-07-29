@@ -15,11 +15,16 @@ branch=$(git symbolic-ref --short HEAD 2>/dev/null)
 
 match=$(git ls-tree -d --name-only HEAD | grep -ix "$branch")
 
+# Cone mode only auto-includes top-level files, not top-level directories —
+# dot-directories (.githooks, .claude, .vscode, etc.) need to be listed
+# explicitly or they vanish from disk. .githooks must always stay in the
+# cone regardless, otherwise narrowing it away deletes this very script
+# and no future checkout can undo it.
+dotdirs=$(git ls-tree -d --name-only HEAD | grep '^\.')
+
 if [ -n "$match" ]; then
   git sparse-checkout init --cone >/dev/null 2>&1
-  # .githooks must always stay in the cone, otherwise narrowing it away
-  # deletes this very script from disk and no future checkout can undo it.
-  git sparse-checkout set ".githooks" "$match" >/dev/null 2>&1
+  git sparse-checkout set $dotdirs "$match" >/dev/null 2>&1
   echo "post-checkout: sparse-checkout limited to '$match' (matched branch '$branch')"
 else
   if [ -f .git/info/sparse-checkout ]; then
