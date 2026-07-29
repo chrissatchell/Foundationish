@@ -17,7 +17,9 @@ match=$(git ls-tree -d --name-only HEAD | grep -ix "$branch")
 
 if [ -n "$match" ]; then
   git sparse-checkout init --cone >/dev/null 2>&1
-  git sparse-checkout set "$match" >/dev/null 2>&1
+  # .githooks must always stay in the cone, otherwise narrowing it away
+  # deletes this very script from disk and no future checkout can undo it.
+  git sparse-checkout set ".githooks" "$match" >/dev/null 2>&1
   echo "post-checkout: sparse-checkout limited to '$match' (matched branch '$branch')"
 else
   if [ -f .git/info/sparse-checkout ]; then

@@ -25,8 +25,11 @@ re-sync the view without switching branches.
 3. If a match is found:
    ```bash
    git sparse-checkout init --cone
-   git sparse-checkout set "<matched-dir>"
+   git sparse-checkout set ".githooks" "<matched-dir>"
    ```
+   `.githooks` must always stay in the cone alongside the matched directory —
+   narrowing it away deletes `post-checkout` from disk, and git silently skips
+   missing hooks, so no later checkout could ever undo the narrowing again.
    Report which directory is now the only one visible.
 4. If no match is found:
    - If sparse-checkout is currently active (`.git/info/sparse-checkout` exists),
