@@ -42,7 +42,7 @@ also removes `[expanded]` from the others. This gives the component reactive
 state using the Custom Elements attribute lifecycle, without a separate state
 library.
 
-## HTML Web Components are first class
+## HTML is First Class
 
 Every component here is an *HTML* Web Component, not a JavaScript one. The
 distinction is the whole design.
