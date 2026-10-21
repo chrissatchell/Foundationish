@@ -13,6 +13,10 @@ customElements.define( 'ish-disclosure', class FoundationishAccordion extends HT
     // Cache for details name attribute support (runs once across all instances)
     static detailsNameSupport = null;
 
+    // Manage listeners across initialization and disconnection.
+    eventController = null;
+    readyController = null;
+
     attr = {
         ready: "ready",
         opened: "expanded"
@@ -78,7 +82,21 @@ customElements.define( 'ish-disclosure', class FoundationishAccordion extends HT
      */
 
     connectedCallback() {
+        // Reattach listeners after a component returns to the document.
+        if ( this.hasAttribute( this.attr.ready ) ) {
+            if ( !this.eventController ) this.reinit();
+            return;
+        }
+
         this.ready();
+    }
+
+    disconnectedCallback() {
+        this.eventController?.abort();
+        this.eventController = null;
+
+        this.readyController?.abort();
+        this.readyController = null;
     }
 
     ready() {
@@ -103,9 +121,13 @@ customElements.define( 'ish-disclosure', class FoundationishAccordion extends HT
         }
 
         // Otherwise wait until the DOM is ready; Safe to query/manipulate DOM elements now. Unlike window.onload, this does not wait for stylesheets, images and fonts to load.
+        this.readyController?.abort();
+        this.readyController = new AbortController();
+
         document.addEventListener('DOMContentLoaded', () => {
-            this.init();
-        }, { once: true });
+            this.readyController = null;
+            if ( this.isConnected ) this.init();
+        }, { once: true, signal: this.readyController.signal });
     }
 
     /**
@@ -133,6 +155,25 @@ customElements.define( 'ish-disclosure', class FoundationishAccordion extends HT
 
         // Set the "is-ready" attribute to indicate that the component is ready to use
         this.setAttribute( this.attr.ready, "");
+
+        // Dispatch only after rendering and listener registration succeed.
+        this.emitReadyEvent();
+    }
+
+    /**
+     * Reinitialize the component without accumulating event listeners.
+     */
+    reinit() {
+        this.readyController?.abort();
+        this.readyController = null;
+
+        this.eventController?.abort();
+        this.eventController = null;
+
+        this.removeAttribute( this.attr.ready );
+        this.triggeredExternally = true;
+
+        if ( this.isConnected ) this.ready();
     }
 
 
@@ -142,9 +183,6 @@ customElements.define( 'ish-disclosure', class FoundationishAccordion extends HT
 
     setup() {
         if ( ! this.detectHTMLDetails() ) return false;
-
-        // Ready to go! emit a custom event: "accordionitem:is-ready"
-        this.emitReadyEvent();
 
         // Return something to detect inside init()
         return true;
@@ -234,13 +272,14 @@ customElements.define( 'ish-disclosure', class FoundationishAccordion extends HT
     */
 
     emitReadyEvent() {
-        this.dispatchEvent(
-            new CustomEvent('accordionitem:is-ready', {
-                bubbles: true,
-                cancelable: false,
-                detail: { expanded: this.expanded }
-            } )
-        );
+        this.dispatchEvent( new CustomEvent( 'ish:ready', {
+            bubbles: true,
+            composed: true,
+            cancelable: false,
+            detail: {
+                expanded: this.hasAttribute( this.attr.opened )
+            }
+        } ) );
     }
 
     emitBeforeToggleEvent( event ) {
@@ -256,6 +295,9 @@ customElements.define( 'ish-disclosure', class FoundationishAccordion extends HT
     }
 
     delegateEvents() {
+        this.eventController?.abort();
+        this.eventController = new AbortController();
+        const { signal } = this.eventController;
 
         /* On Click: Notify before the native summary toggles. */
         this.addEventListener( 'click', ( event ) => {
@@ -266,7 +308,7 @@ customElements.define( 'ish-disclosure', class FoundationishAccordion extends HT
 
             this.emitBeforeToggleEvent( event );
 
-        } );
+        }, { signal } );
 
         /* Native toggles also cover keyboard input and changes to details.open. */
         this.addEventListener( 'toggle', ( event ) => {
@@ -276,7 +318,7 @@ customElements.define( 'ish-disclosure', class FoundationishAccordion extends HT
 
             this.triggeredExternally = false;
             this.toggleAttribute( this.attr.opened, details.open );
-        }, true );
+        }, { capture: true, signal } );
     }
 
 
