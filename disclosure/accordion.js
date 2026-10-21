@@ -1,3 +1,5 @@
+
+
 customElements.define( 'accordion-item', class FoundationishAccordion extends HTMLElement {
 
     /**
@@ -224,15 +226,6 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
 
     /**
-     *  Constructor
-     */
-
-    constructor() {
-        super();
-    }
-
-
-    /**
      *  1. When connected to the DOM, run the init() method when ready.
      */
 
@@ -385,6 +378,8 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
                 } else {
                     log(`No template found with ID "${templateID}". Falling back to default template.`);
                     setShadowDOM();
+
+                    // NOTE 67a: All of the below can be a function, the same as NOTE 67b
                     const defaultTemplate = document.createElement("template");
                     defaultTemplate.innerHTML = this.#defaultTemplate;
                     const fragment = defaultTemplate.content.cloneNode(true);
@@ -397,6 +392,8 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
                 c. Use the default template if there is a [template] attribute.
             */
             else {
+
+                // NOTE 67b: All of the below can be a function
 
                 this.setAttribute('type','default-template');
 

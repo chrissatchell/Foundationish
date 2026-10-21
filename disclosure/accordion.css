@@ -21,7 +21,8 @@
 @layer accordion.core {
 
     :host,
-    accordion-item {
+    accordion-item,
+    ish-disclosure {
         font-size: 16px; /* Alternative 16px × 0.625 = 10px → 1rem = 10px */
         line-height: var(--reset-body-line-height, 1.5);
 
@@ -88,7 +89,8 @@
 @layer accordion.theme {
 
     :host,
-    accordion-item {
+    accordion-item,
+    ish-disclosure {
          --color-active: #b7b923;
         border-radius: var(--fndish-disclosure-radius);
 
