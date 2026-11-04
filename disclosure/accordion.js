@@ -11,9 +11,6 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
     panelID = false;
 
-    // Internal flag used to distinguish event-driven attribute updates from external changes
-    triggeredExternally = true;
-
     // Cache for details name attribute support (runs once across all instances)
     static detailsNameSupport = null;
 
@@ -105,34 +102,20 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
                 case 'expanded':
 
-                    // ADDED
-                    if ( newValue === '' ) {
+                    const details = this.querySelector('details');
+                    // Boolean attributes are true whenever present, regardless of their value.
+                    const expanded = newValue !== null;
 
-                        // let openAttr = this.querySelector('details').hasAttribute('open');
-                        // if ( ! openAttr ) this.querySelector('details').setAttribute('open', '');
+                    // Reflect public host state to the native disclosure. Reflection copies
+                    // the desired state rather than toggling it or tracking its origin.
+                    // Only write when states differ, so a reflected native toggle does
+                    // not cause another native change and start a feedback loop.
+                    if ( details.open !== expanded ) {
+                        details.open = expanded;
+                    }
 
-                         /* Except for the target, close all disclosures */
-                        if ( this.hasSingleSelectAttribute() ) {
-                            this.expandedAttrHandler().closeAll();
-                        }
-
-                        if ( this.triggeredExternally === true ) {
-                            this.querySelector('details').setAttribute('open','');
-                        }
-
-                        this.triggeredExternally = true;
-
-                    // REMOVED
-                    } else if ( newValue === null ) {
-
-                        // console.log(`REMOVED, this.triggeredExternally: ${this.triggeredExternally}`);
-
-                        if ( this.triggeredExternally === true ) {
-                            this.querySelector('details').removeAttribute('open');
-                        }
-
-                        this.triggeredExternally = true;
-
+                    if ( expanded && this.hasSingleSelectAttribute() ) {
+                        this.expandedAttrHandler().closeAll();
                     }
 
                     break;
@@ -659,26 +642,67 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
         );
     }
 
-    emitBeforeToggleEvent() {
+    emitBeforeToggleEvent( event, triggeredExternally = false ) {
         this.dispatchEvent( new CustomEvent( 'accordion:before-toggle', {
             bubbles: true,
             composed: true, // event can cross shadow DOM boundaries
             detail: {
                 element: event.target,
                 expanded: this.hasAttribute( this.attr.opened ),
-                triggeredExternally: this.triggeredExternally
+                // Preserve the event detail without storing a synchronization flag.
+                triggeredExternally
             }
         } ) );
     }
 
     delegateEvents() {
 
-        /* On Click: Update WC attr to run attributeChangedCallback */
+        const details = !this.hasTemplateAttr() && this.querySelector('details');
+
+        if ( details ) {
+            // Native summary activation handles pointer and keyboard interaction.
+            // Emit the existing before event, but let the browser change `open`.
+            details.addEventListener( 'click', event => {
+                const summary = details.querySelector(':scope > summary');
+                if ( event.target.closest('accordion-item') !== this ) return;
+                if ( !event.composedPath().includes(summary) ) return;
+
+                this.emitBeforeToggleEvent( event );
+            } );
+
+            details.addEventListener( 'toggle', event => {
+                if ( event.target !== details ) return;
+
+                // Reflect the native state back to the public host attribute.
+                // `toggle` is queued and can combine several changes, so read the
+                // current `open` property instead of inverting the previous state.
+                // This also observes script changes and native details[name] closing.
+                // The equality guard completes two-way reflection: once both states
+                // agree, neither side writes again. No origin flag is needed.
+                if ( this.hasAttribute(this.attr.opened) !== details.open ) {
+                    this.toggleAttribute( this.attr.opened, details.open );
+                }
+            } );
+
+            // Do not also toggle the host on click: that would compete with the
+            // summary's native default action and could undo the user's change.
+            return;
+        }
+
+        /* Custom disclosures still use their trigger to change the host attribute. */
         this.addEventListener( 'click', ( event ) => {
 
-            this.triggeredExternally = false;
+            const root = this.shadowRoot ?? this;
+            const trigger = root.querySelector('slot[name="trigger"]')?.assignedElements({ flatten: true })[0]
+                ?? root.querySelector('.disclosure > button, .trigger, button[aria-expanded]');
 
-            this.emitBeforeToggleEvent();
+            // composedPath includes shadow/slotted triggers. Ignore panel clicks
+            // and events belonging to a nested accordion-item.
+            const path = event.composedPath();
+            if ( path.find(node => node.localName === 'accordion-item') !== this ) return;
+            if ( !path.includes(trigger) ) return;
+
+            this.emitBeforeToggleEvent( event );
 
             if ( this.hasAttribute( this.attr.opened ) ) this.removeAttribute( this.attr.opened );
 
@@ -686,22 +710,6 @@ customElements.define( 'accordion-item', class FoundationishAccordion extends HT
 
         } );
 
-        /* On Toggle: Update WC attr to run attributeChangedCallback */
-        // this.addEventListener("toggle", (event) => {
-
-        //     console.log('toggle');
-
-        //     if ( this.hasAttribute( this.attr.opened ) ) this.removeAttribute( this.attr.opened );
-
-        //     else this.setAttribute( this.attr.opened, '' );
-
-        // } );
-
-        this.addEventListener( 'accordion:before-toggle', event => {
-            setTimeout(function () {
-                return true;
-            }, 10000);
-        });
     }
 
 

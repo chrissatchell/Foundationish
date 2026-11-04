@@ -10,17 +10,7 @@
 
         <h1><code>&lt;accordion-item&gt;</code></h1>
 
-        <ish-disclosure class="right-icon animate animate-in-out">
-            <details>
-                <summary>Without fuss or bother</summary>
-                <div>
-                    <p>Meet the exact needs of the user.</p>
-                    <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Illum ut, repudiandae quas ipsa quis, assumenda ullam provident exercitationem quae, quam minima iste quisquam! Laborum sunt similique molestias, explicabo doloremque voluptatibus?</p>
-                </div>
-            </details>
-        </ish-disclosure>
-
-        <ish-accordion :label="Frequently Asked Questions" region exclusive>
+        <accordion-items role="region" aria-label="More Frequently Asked Questions">
 
             <ish-disclosure class="right-icon animate animate-in-out">
                 <details>
@@ -42,7 +32,17 @@
                 </details>
             </ish-disclosure>
 
-        </ish-accordion>
+            <ish-disclosure class="right-icon animate animate-in-out">
+                <details>
+                    <summary>Without fuss or bother</summary>
+                    <div>
+                        <p>Meet the exact needs of the user.</p>
+                        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Illum ut, repudiandae quas ipsa quis, assumenda ullam provident exercitationem quae, quam minima iste quisquam! Laborum sunt similique molestias, explicabo doloremque voluptatibus?</p>
+                    </div>
+                </details>
+            </ish-disclosure>
+
+        </accordion-items>
 
         <br>
 
@@ -73,7 +73,7 @@
 
         </accordion-items>
 
-        <accordion-items role="region" aria-label="More Frequently Asked Questions">
+        <accordion-items role="region" aria-label="More Frequently Asked Questions" single-select>
 
             <accordion-item class="left-icon animate-in-out">
                 <details>

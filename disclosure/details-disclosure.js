@@ -4,18 +4,14 @@ customElements.define( 'ish-disclosure', class FoundationishAccordion extends HT
      *  Fields
      */
 
-
     expanded = false;
-
-    // Internal flag used to distinguish event-driven attribute updates from external changes
-    triggeredExternally = true;
 
     // Cache for details name attribute support (runs once across all instances)
     static detailsNameSupport = null;
 
     attr = {
         ready: "ready",
-        opened: "expanded"
+        expanded: "expanded"
     };
 
     /**
@@ -30,44 +26,38 @@ customElements.define( 'ish-disclosure', class FoundationishAccordion extends HT
     /* When attributes change then do something */
     attributeChangedCallback ( attrName, oldValue, newValue ) {
 
-         /* Details element is provided */
-        if ( this.detectHTMLDetails() ) {
+        switch ( attrName ) {
 
-            switch ( attrName ) {
+            case 'expanded':
 
-                case 'expanded':
+                /* Details element is provided */
+                if ( this.detectHTMLDetails() ) {
 
-                    // ADDED
-                    if ( newValue !== null ) {
+                    const details = this.querySelector('details');
 
-                         /* Except for the target, close all disclosures */
-                        if ( this.hasSingleSelectAttribute() ) {
-                            this.expandedAttrHandler().closeAll();
-                        }
+                    // Boolean attributes are true whenever present, regardless of their value.
+                    const expanded = newValue !== null;
 
-                        if ( this.triggeredExternally === true ) {
-                            this.querySelector(':scope > details').setAttribute('open','');
-                        }
+                    console.log(`Attribute changed: ${attrName} from ${oldValue == '' ? '""' : oldValue} to ${newValue == '' ? '""' : newValue}. Reflecting to details.open: ${expanded}`);
 
-                        this.triggeredExternally = true;
+                    // Reflect public host state to the native disclosure. Reflection copies
+                    // the desired state rather than toggling it or tracking its origin.
+                    // Only write when states differ, so a reflected native toggle does
+                    // not cause another native change and start a feedback loop.
+                    if ( details.open !== expanded ) {
+                        details.open = expanded;
+                    }
 
-                    // REMOVED
-                    } else if ( newValue === null ) {
-
-                        if ( this.triggeredExternally === true ) {
-                            this.querySelector(':scope > details').removeAttribute('open');
-                        }
-
-                        this.triggeredExternally = true;
-
+                    if ( expanded && this.hasSingleSelectAttribute() ) {
+                        this.expandedAttrHandler().closeAll();
                     }
 
                     break;
 
-                default:
-                    break;
-            }
+                }
 
+            default:
+                break;
         }
 
     }
@@ -199,7 +189,7 @@ customElements.define( 'ish-disclosure', class FoundationishAccordion extends HT
 
                 if ( detailsElements && detailsElements.length > 0 ) {
 
-                    let id = `fndish-details-${Math.random().toString(36).substr(2, 9)}`;
+                    let id = `ish-${Math.random().toString(36).substr(2, 9)}`;
 
                     for ( const detail of detailsElements ) {
 
@@ -243,41 +233,103 @@ customElements.define( 'ish-disclosure', class FoundationishAccordion extends HT
         );
     }
 
-    emitBeforeToggleEvent( event ) {
-        this.dispatchEvent( new CustomEvent( 'accordion:before-toggle', {
-            bubbles: true,
-            composed: true, // event can cross shadow DOM boundaries
-            detail: {
-                element: event.target,
-                expanded: this.hasAttribute( this.attr.opened ),
-                triggeredExternally: false
-            }
-        } ) );
-    }
+    // emitBeforeToggleEvent( event ) {
+    //     this.dispatchEvent( new CustomEvent( 'accordion:before-toggle', {
+    //         bubbles: true,
+    //         composed: true, // event can cross shadow DOM boundaries
+    //         detail: {
+    //             element: event.target,
+    //             expanded: this.hasAttribute( this.attr.expanded ),
+    //         }
+    //     } ) );
+    // }
+    togglePending = false;
 
     delegateEvents() {
+        const details = this.querySelector('details');
+        let pending = false;
 
-        /* On Click: Notify before the native summary toggles. */
-        this.addEventListener( 'click', ( event ) => {
+        /*
+            NOTE:
+            The click event bubbles up from the summary element, so we can listen for it on the details element.
+            This allows us to intercept (prevent) the click before the native toggle behavior occurs.
+        */
+        details.addEventListener( 'click', (event) => {
+            /*
+                NOTE:
+                The beforeToggleEvent() method dispatches a custom event 'ish:beforetoggle' that is cancelable.
+                If any listener calls event.preventDefault() on the 'ish:beforetoggle' event, the native toggle behavior will be prevented.
 
-            const details = this.querySelector(':scope > details');
-            const summary = details.querySelector(':scope > summary');
-            if ( !summary || !summary.contains(event.target) ) return;
+                Example usage:
+                this.addEventListener( 'ish:beforetoggle', (event) => {
+                    event.preventDefault();
 
-            this.emitBeforeToggleEvent( event );
+                    etc...
+                } );
+
+                Here, event.preventDefault() cancels the ish:beforetoggle event and now this.beforeToggleEvent(details) returns false,
+                which prevents the native toggle behavior from occurring.
+            */
+
+            if ( !this.beforeToggleEvent(details) ) {
+                event.preventDefault();
+            }
 
         } );
 
-        /* Native toggles also cover keyboard input and changes to details.open. */
-        this.addEventListener( 'toggle', ( event ) => {
-            const details = this.querySelector(':scope > details');
-            if ( event.target !== details ) return;
-            if ( details.open === this.hasAttribute(this.attr.opened) ) return;
+        // this.addEventListener( 'ish:beforetoggle', (event) => {
+        //     event.preventDefault();
 
-            this.triggeredExternally = false;
-            this.toggleAttribute( this.attr.opened, details.open );
-        }, true );
+        //     // Ignore events bubbling from nested disclosures.
+        //     if ( event.target !== this ) return;
+
+        //     if ( pending ) return;
+        //     pending = true;
+
+        //     setTimeout(() => {
+        //         details.open = event.detail.open;
+        //         pending = false;
+        //     }, 2000);
+
+        // } );
+
+        details.addEventListener( 'toggle', event => {
+            if ( event.target !== details ) return;
+
+            // Reflect the current native state from the details element onto the host (custom element.
+            if ( this.hasAttribute(this.attr.expanded) !== details.open ) {
+                this.toggleAttribute( this.attr.expanded, details.open );
+            }
+        } );
     }
+
+    beforeToggleEvent(details) {
+        /*
+            Returns true unless the event is canceled by a listener calling event.preventDefault():
+            this.addEventListener( 'ish:beforetoggle', (event) => {
+                event.preventDefault();
+                etc...
+            } );
+        */
+        return this.dispatchEvent( new CustomEvent('ish:beforetoggle', {
+            bubbles: true,
+            cancelable: true,
+            detail: {
+                element: details,
+                open: !details.open,
+                pending: this.togglePending
+            }
+        }) );
+    }
+
+    // beforeToggleCallback = null;
+
+    // beforeToggleHander(pending) {
+    //     if ( this.beforeToggleCallback === 'function' ) {
+    //         this.beforeToggleCallback();
+    //     }
+    //     return this.beforeToggleCallback;
+    // }
 
 
     /*
@@ -295,7 +347,7 @@ customElements.define( 'ish-disclosure', class FoundationishAccordion extends HT
             [...accordionItems].forEach( item => {
 
                 // Except for the target, close all disclosures
-                if ( item !== this ) item.removeAttribute(this.attr.opened);
+                if ( item !== this ) item.removeAttribute(this.attr.expanded);
 
             } );
         }

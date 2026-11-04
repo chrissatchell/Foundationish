@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Accordion - Foundation(ish) Accessible Components</title>
+        <link rel="stylesheet" href="./accordion.css" />
+	</head>
+	<body class="superbody" style="width:min(100%, 30rem); margin: 0 auto;">
+
+        <h1><code>&lt;ish-disclosure&gt;</code></h1>
+
+        <accordion-items role="region" aria-label="More Frequently Asked Questions">
+
+            <ish-disclosure class="right-icon animate animate-in-out">
+                <details>
+                    <summary>Without fuss or bother</summary>
+                    <div>
+                        <p>Meet the exact needs of the user.</p>
+                        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Illum ut, repudiandae quas ipsa quis, assumenda ullam provident exercitationem quae, quam minima iste quisquam! Laborum sunt similique molestias, explicabo doloremque voluptatibus?</p>
+                    </div>
+                </details>
+            </ish-disclosure>
+
+            <ish-disclosure class="right-icon animate animate-in-out">
+                <details>
+                    <summary>Without fuss or bother</summary>
+                    <div>
+                        <p>Meet the exact needs of the user.</p>
+                        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Illum ut, repudiandae quas ipsa quis, assumenda ullam provident exercitationem quae, quam minima iste quisquam! Laborum sunt similique molestias, explicabo doloremque voluptatibus?</p>
+                    </div>
+                </details>
+            </ish-disclosure>
+
+            <ish-disclosure class="right-icon animate animate-in-out">
+                <details>
+                    <summary>Without fuss or bother</summary>
+                    <div>
+                        <p>Meet the exact needs of the user.</p>
+                        <p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Illum ut, repudiandae quas ipsa quis, assumenda ullam provident exercitationem quae, quam minima iste quisquam! Laborum sunt similique molestias, explicabo doloremque voluptatibus?</p>
+                    </div>
+                </details>
+            </ish-disclosure>
+
+        </accordion-items>
+
+        <script src="./accordion.js"></script>
+        <script src="./details-disclosure.js"></script>
+
+        <script>
+            // [ ...document.querySelectorAll('ish-disclosure') ].forEach( ( $disclosure ) => {
+
+            //     $disclosure.addEventListener('ish:beforetoggle', (event) => {
+
+            //         // Ignore events bubbling from nested disclosures.
+            //         if ( event.target !== $disclosure ) {
+            //             return;
+            //         }
+
+            //         // Cancel the event
+            //         event.preventDefault();
+
+            //         // Ignore repeated requests while a toggle is pending.
+            //         if ( $disclosure.togglePending ) return;
+            //         $disclosure.togglePending = true;
+
+            //         const open = event.detail.open;
+
+            //         var _delay = 2000;
+
+            //         setTimeout(() => {
+            //             $disclosure.toggleAttribute('expanded', open);
+            //             $disclosure.togglePending = false;
+            //         }, open ? _delay : 0);
+
+            //     });
+
+            // });
+        </script>
+        <script>
+            [ ...document.querySelectorAll('ish-disclosure') ].forEach( ( $disclosure ) => {
+
+                let loaded = false;
+
+                $disclosure.addEventListener('ish:beforetoggle', async (event) => {
+
+                    // Ignore events bubbling from nested disclosures.
+                    if ( event.target !== $disclosure ) return;
+
+                    event.preventDefault();
+
+                    if ( $disclosure.togglePending ) return;
+                    $disclosure.togglePending = true;
+
+                    const open = event.detail.open;
+
+                    try {
+                        if ( open && !loaded ) {
+                            // Simulate a two-second delay.
+                            await new Promise(resolve => setTimeout(resolve, 2000));
+
+                            const response = await fetch('./api/disclosure.json');
+
+                            if ( !response.ok ) {
+                                throw new Error(`Request failed: ${response.status}`);
+                            }
+
+                            const data = await response.json();
+
+                            if (
+                                typeof data.summary !== 'string' ||
+                                typeof data.content !== 'string'
+                            ) {
+                                throw new Error('Expected summary and content strings.');
+                            }
+
+                            const summary = $disclosure.querySelector(
+                                ':scope > details > summary'
+                            );
+                            const panel = $disclosure.querySelector(
+                                ':scope > details > summary + div'
+                            );
+
+                            if ( !summary || !panel ) {
+                                throw new Error('Missing summary or content panel.');
+                            }
+
+                            panel.textContent = data.content;
+                            loaded = true;
+                        }
+
+                        // Open only after the fetched content has been applied.
+                        $disclosure.toggleAttribute('expanded', open);
+                    } catch (error) {
+                        console.error('Could not load disclosure content:', error);
+                    } finally {
+                        $disclosure.togglePending = false;
+                    }
+
+                });
+
+            });
+        </script>
+    </body>
+</html>

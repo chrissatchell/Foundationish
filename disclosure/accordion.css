@@ -451,7 +451,8 @@
     }
 
     :host,
-    accordion-item {
+    accordion-item,
+    ish-disclosure {
         display: block;
         margin-bottom: 1rem;
         width: min(100%, 50rem);
