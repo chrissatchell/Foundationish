@@ -14,7 +14,7 @@
     /* dropdown.utilities, */
     dropdown.demo;
 
-/* @import "./styles/reset.css" layer(dropdown.reset); */
+@import "./styles/reset.css" layer(dropdown.reset);
 
 
 @layer dropdown.tokens {
@@ -32,7 +32,6 @@
         --acc-dropdown-panel-duration: 0.15s;
     }
 }
-
 
 @layer dropdown.core {
 
@@ -131,7 +130,6 @@
 
     }
 }
-
 
 @layer dropdown.demo {
     :root {

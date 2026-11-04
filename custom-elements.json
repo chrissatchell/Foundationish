@@ -1,0 +1,88 @@
+{
+  "$schema": "https://raw.githubusercontent.com/webcomponents/custom-elements-manifest/master/schema.json",
+  "schemaVersion": "1.0.0",
+  "readme": "README.md",
+  "modules": [
+    {
+      "kind": "javascript-module",
+      "path": "disclosure/accordion.js",
+      "declarations": [
+        {
+          "kind": "class",
+          "name": "FoundationishAccordion",
+          "description": "A progressively enhanced disclosure item. It enhances native details markup, light-DOM button and panel markup, or opt-in Shadow DOM templates.",
+          "customElement": true,
+          "tagName": "accordion-item",
+          "attributes": [
+            {
+              "name": "expanded",
+              "description": "Controls the open state. When present, the component synchronizes aria-expanded and panel visibility, or the nested details element's open state.",
+              "type": { "text": "boolean" }
+            },
+            {
+              "name": "template",
+              "description": "Uses the default Shadow DOM template when present without a value, or clones the document template whose id is the attribute value.",
+              "type": { "text": "string" }
+            },
+            {
+              "name": "shadowstyles",
+              "description": "Adds Shadow DOM styles. Use the empty string or default for the component defaults, or provide a CSS URL.",
+              "type": { "text": "string" }
+            }
+          ],
+          "events": [
+            {
+              "name": "accordionitem:is-ready",
+              "description": "Dispatched when component setup begins.",
+              "type": { "text": "CustomEvent<{ expanded: boolean }>" }
+            },
+            {
+              "name": "accordion:before-toggle",
+              "description": "Dispatched before an interaction toggles the expanded attribute.",
+              "type": { "text": "CustomEvent<{ element: EventTarget; expanded: boolean; triggeredExternally: boolean }>" }
+            }
+          ],
+          "slots": [
+            {
+              "name": "trigger",
+              "description": "Supplies the interactive trigger when using the default Shadow DOM template."
+            },
+            {
+              "name": "panel",
+              "description": "Supplies the disclosure panel when using the default Shadow DOM template."
+            },
+            {
+              "name": "trigger-label",
+              "description": "Supplies the default template trigger label."
+            },
+            {
+              "name": "panel-content",
+              "description": "Supplies the default template panel content."
+            }
+          ],
+          "cssParts": [
+            {
+              "name": "disclosure",
+              "description": "The disclosure wrapper in the default template."
+            },
+            {
+              "name": "trigger",
+              "description": "The trigger button in the default template."
+            },
+            {
+              "name": "panel",
+              "description": "The panel in the default template."
+            }
+          ]
+        }
+      ],
+      "exports": [
+        {
+          "kind": "custom-element-definition",
+          "name": "accordion-item",
+          "declaration": { "name": "FoundationishAccordion" }
+        }
+      ]
+    }
+  ]
+}
