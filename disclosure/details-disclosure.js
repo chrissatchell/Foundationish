@@ -311,13 +311,25 @@ customElements.define( 'ish-disclosure', class FoundationishAccordion extends HT
                 etc...
             } );
         */
+        const open = !details.open;
+
+        let completed = false;
+
+        const done = () => {
+            if ( completed ) return;
+
+            completed = true;
+
+            this.toggleAttribute( this.attr.expanded, open );
+        };
+
         return this.dispatchEvent( new CustomEvent('ish:beforetoggle', {
             bubbles: true,
             cancelable: true,
             detail: {
                 element: details,
-                open: !details.open,
-                pending: this.togglePending
+                open,
+                done
             }
         }) );
     }
